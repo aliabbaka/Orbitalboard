@@ -1,10 +1,12 @@
 import { solve } from './engine/eht.js';
 import { scanAngle, type AngleScan } from './engine/scan.js';
 import type { SystemState } from './engine/types.js';
+import { sampleSystemOrbital } from './engine/field.js';
 
 type Request =
   | { id: string; action: 'solve'; state: SystemState }
-  | { id: string; action: 'scan-angle'; state: SystemState; options: AngleScan };
+  | { id: string; action: 'scan-angle'; state: SystemState; options: AngleScan }
+  | { id: string; action: 'sample-orbital'; state: SystemState; orbitalIndex: number; resolution?: number };
 
 /** No work runs on import. The future board sends a request only after an explicit student action. */
 const worker = globalThis as unknown as {
@@ -19,6 +21,7 @@ worker.onmessage = event => {
     let result: unknown;
     if (request.action === 'solve') result = solve(request.state);
     else if (request.action === 'scan-angle') result = scanAngle(request.state, request.options);
+    else if (request.action === 'sample-orbital') result = sampleSystemOrbital(request.state, request.orbitalIndex, request.resolution);
     else throw new Error('Unknown worker action.');
     worker.postMessage({ id, ok: true, result });
   } catch (error) {

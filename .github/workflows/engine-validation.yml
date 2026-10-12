@@ -22,10 +22,22 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-          cache-dependency-path: scripts/requirements-oracle.txt
+          cache-dependency-path: |
+            scripts/requirements-oracle.txt
+            backend/requirements.txt
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
-      - run: python -m pip install -r scripts/requirements-oracle.txt
-      - run: python scripts/generate_oracle.py --check
+      - run: python -m venv .venv
+      - run: .venv/bin/python -m pip install -r scripts/requirements-oracle.txt -r backend/requirements.txt
+      - run: .venv/bin/python scripts/generate_oracle.py --check
+      - run: npm run test:backend
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - run: npm run validation-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-browser-evidence
+          path: test-results/
+          if-no-files-found: ignore

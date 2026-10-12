@@ -1,6 +1,6 @@
 {
   "name": "orbitalboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "A traceable, deterministic chemistry and math learning engine",
@@ -11,7 +11,15 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "demo": "npm run build && node scripts/demo.mjs",
     "benchmark": "npm run build && node scripts/benchmark.mjs",
-    "validation-report": "npm run build && node scripts/validation-report.mjs"
+    "validation-report": "npm run build && node scripts/validation-report.mjs",
+    "start": "npm run build && node scripts/start.mjs",
+    "test:browser": "npm run build && playwright test",
+    "test:backend": ".venv/bin/python -m unittest discover -s backend/tests -v"
   },
-  "devDependencies": { "typescript": "5.7.3" }
+  "dependencies": { "three": "0.186.1" },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "@types/three": "0.186.0",
+    "@playwright/test": "1.64.0"
+  }
 }

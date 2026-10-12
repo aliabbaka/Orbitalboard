@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build a small molecular system and explore real computed orbitals, occupations and model limits.">
+  <title>OrbitalBoard · Molecular lab</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="importmap" nonce="__CSP_NONCE__">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+  <script type="module" src="/dist/lab/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#lab">Skip to the lab</a>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="OrbitalBoard home"><svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="17" ry="7" transform="rotate(-35 20 20)"/><ellipse cx="20" cy="20" rx="17" ry="7" transform="rotate(35 20 20)"/><circle cx="20" cy="20" r="2"/></svg><span>OrbitalBoard<span class="brand-sub">MOLECULAR LAB</span></span></a>
+    <div class="header-actions"><span class="version">LAB 0.2 · EHT 0.1</span><a href="/methods" target="_blank" rel="noopener">Methods ↗</a><button id="theme" class="quiet" aria-label="Switch to light theme">Light mode</button></div>
+  </header>
+  <main id="lab">
+    <section class="intro"><div><p class="eyebrow">THE ORBITAL LAB</p><h1>Make the invisible<br><span class="muted">a little more tangible.</span></h1></div><p class="intro-note">Your geometry. Real calculations.<br>Explore the orbitals, follow the electrons,<br>and see where the model stops.</p></section>
+    <div class="lab-layout">
+      <aside class="panel controls" aria-labelledby="system-title">
+        <div class="panel-heading"><h2 id="system-title">01 / Your system</h2><span class="tag">INPUT</span></div>
+        <label for="preset">Starting geometry</label><select id="preset"></select>
+        <p class="fine">Illustrative coordinates, not optimized structures. Presets are shortcuts, not the scope.</p>
+        <details class="xyz-input"><summary>Use your own XYZ coordinates</summary><label class="sr-only" for="xyz">XYZ coordinates</label><textarea id="xyz" rows="6" spellcheck="false" placeholder="3&#10;comment (angstrom)&#10;O 0 0 0&#10;H 0.76 0 0.59&#10;H -0.76 0 0.59"></textarea><button id="load-xyz" class="secondary">Load coordinates</button></details>
+        <div class="control-row"><label for="charge">Charge</label><input id="charge" type="number" value="0" step="1" min="-20" max="20"></div>
+        <div class="control-row"><label for="spin">Spin multiplicity</label><select id="spin"><option value="0">Auto · Hund</option><option value="1">1 · singlet</option><option value="2">2 · doublet</option><option value="3">3 · triplet</option><option value="4">4 · quartet</option><option value="5">5 · quintet</option></select></div>
+        <div class="control-row"><label for="k">Model constant K</label><input id="k" type="number" min="0.1" max="5" step="0.05" value="1.75"></div>
+        <button id="solve" class="primary">Solve this system <span aria-hidden="true">↗</span></button>
+        <label class="check"><input type="checkbox" id="live" checked>Update live after I solve</label>
+        <p id="status" class="status" role="status" aria-live="polite">Choose a system, then press Solve.</p>
+        <hr>
+        <h3>Explore the geometry</h3>
+        <div class="control-row"><label for="center-atom">Center / fixed atom</label><select id="center-atom"></select></div>
+        <div class="control-row"><label for="moving-atom">Moving atom</label><select id="moving-atom"></select></div>
+        <div class="range-heading"><label for="distance">Distance · Å</label><input id="distance-value" aria-label="Distance in angstrom" type="number" min="0.2" max="5" step="0.01"></div><input id="distance" aria-label="Distance slider" type="range" min="0" max="1000" step="1"><p class="fine">Log scale. A what-if input, never a bond-length optimizer.</p>
+        <div class="control-row"><label for="fixed-atom">Angle reference atom</label><select id="fixed-atom"></select></div>
+        <div class="range-heading"><label for="angle">Angle · °</label><input id="angle-value" aria-label="Angle in degrees" type="number" min="10" max="180" step="1"></div><input id="angle" aria-label="Angle slider" type="range" min="10" max="180" step="1">
+        <details><summary>Atom coordinates · keyboard alternative</summary><div id="coordinates"></div></details>
+        <p class="fine">Enabled: H, He, C, N, O, F.<br>Li, Be, B and Ne await reference validation.</p>
+      </aside>
+
+      <section class="panel viewer-panel" aria-labelledby="viewer-title">
+        <div class="panel-heading"><h2 id="viewer-title">02 / Molecular view</h2><span id="view-trust" class="tag">INPUT GEOMETRY</span></div>
+        <div class="viewer-toolbar"><div><span id="orbital-name" class="orbital-name">A starting point.</span><p id="orbital-description" class="fine">No orbital has been calculated yet.</p></div><button id="reset-camera" class="quiet" aria-label="Reset 3D camera">Reset view</button></div>
+        <div id="viewport" class="viewport" role="img" aria-label="Starting molecular geometry. Solve to see an orbital."><div id="viewer-unavailable" class="viewer-fallback" hidden>3D is unavailable on this device. The energy ladder, matrices and coordinates still work.</div><div id="initial-overlay" class="viewport-note">First, choose what to compute.<br><span>Press Solve to reveal the orbitals.</span></div></div>
+        <div class="view-bottom"><span>Drag to orbit · scroll to zoom</span><button id="drag-atoms" class="quiet" aria-pressed="false">Move atoms</button><span class="phase-key"><b>+</b> solid &nbsp; <b>−</b> wire / hollow</span></div>
+        <div class="surface-controls"><label for="view-mode">View</label><select id="view-mode"><option value="surface">Orbital surface</option><option value="cloud">Density cloud</option><option value="molecule">Molecule only</option></select><label for="isovalue">Isovalue</label><input id="isovalue" type="range" min="0" max="1000" value="600"><output id="iso-value" for="isovalue"></output><label for="resolution" class="sr-only">Grid resolution</label><select id="resolution"><option value="24">24³ · fast</option><option value="28" selected>28³ · balanced</option><option value="36">36³ · detailed</option></select></div>
+        <p id="surface-status" class="fine surface-status" role="status">Surfaces use the solved wavefunction, never stock orbital pictures.</p>
+        <div class="stats" id="stats"><div><span>Valence electrons</span><strong id="electron-count" data-cite="electronCount">—</strong></div><div><span>Unpaired</span><strong id="unpaired" data-cite="unpairedElectrons">—</strong></div><div><span>Bond order <small>diatomic</small></span><strong id="bond-order" data-cite="textbookBondOrder">—</strong></div><div><span>Frontier gap <small>eV</small></span><strong id="gap" data-cite="frontierGapEV">—</strong></div></div>
+      </section>
+
+      <aside class="panel levels-panel" aria-labelledby="levels-title"><div class="panel-heading"><h2 id="levels-title">03 / Energy ladder</h2><span class="tag" id="ladder-trust">NOT SOLVED</span></div><div class="frontier-buttons"><button id="homo" class="secondary" disabled>HOMO</button><button id="lumo" class="secondary" disabled>LUMO</button></div><p class="fine">Click a level to explore. ↑↓ are computed occupations; spacing is schematic.</p><div id="ladder" class="ladder"><div class="empty-state">The levels will appear here.<br><span>Computed, not imagined.</span></div></div><div class="orbital-detail" id="orbital-detail" hidden><p class="eyebrow">SELECTED ORBITAL</p><strong id="selected-energy" data-cite="selected.energyEV"></strong><p id="selected-character"></p><div id="composition"></div></div></aside>
+    </div>
+
+    <section class="panel inspector" aria-label="Inspect the calculation">
+      <div class="inspector-heading"><div role="tablist" aria-label="Data views"><button role="tab" id="tab-reality" aria-controls="view-reality" aria-selected="true" tabindex="0">Reality check</button><button role="tab" id="tab-matrix" aria-controls="view-matrix" aria-selected="false" tabindex="-1">Matrices</button><button role="tab" id="tab-scan" aria-controls="view-scan" aria-selected="false" tabindex="-1">Angle scan</button><button role="tab" id="tab-state" aria-controls="view-state" aria-selected="false" tabindex="-1">Live state</button></div><span id="provenance" class="fine">A source behind every value.</span></div>
+      <div id="view-reality" role="tabpanel" aria-labelledby="tab-reality" class="inspector-view"><div class="reality-intro"><h3>A useful model. Not the whole truth.</h3><p>EHT is an educational approximation. Disagreements belong in the lesson, not behind the curtain.</p></div><div id="reality"><p class="fine">Solve a system to see its limitations and cited reference checks.</p></div></div>
+      <div id="view-matrix" role="tabpanel" aria-labelledby="tab-matrix" class="inspector-view" hidden><div class="inline-controls"><label for="matrix-kind">Inspect</label><select id="matrix-kind"><option value="overlap">Overlap S · dimensionless</option><option value="hamiltonianEV">Hamiltonian H · eV</option></select><p id="matrix-readout" class="fine">Select a cell to inspect its source.</p></div><div id="matrix" class="table-scroll"><p class="fine">No matrix until Solve.</p></div></div>
+      <div id="view-scan" role="tabpanel" aria-labelledby="tab-scan" class="inspector-view" hidden><div class="inline-controls"><label for="scan-min">From °</label><input id="scan-min" type="number" min="10" max="179" value="90"><label for="scan-step">Step °</label><input id="scan-step" type="number" min="1" max="30" value="5"><button id="scan" class="secondary" disabled>Run angle scan</button><span class="fine">To 180° · fixed radii · chosen three-atom handle</span></div><p id="scan-status" class="fine" role="status">Choose a system with at least three atoms. Scan only runs when requested.</p><div id="scan-chart"></div><details><summary>Exact scan values and warnings</summary><div id="scan-table" class="table-scroll"></div></details></div>
+      <div id="view-state" role="tabpanel" aria-labelledby="tab-state" class="inspector-view" hidden><div class="inline-controls"><h3>The live solved state</h3><button id="copy-state" class="secondary" disabled>Copy JSON</button><span class="fine">Raw values + inputs + source links + pinned versions.</span></div><pre id="state-json">No solved state yet.</pre></div>
+    </section>
+
+    <section class="panel tutor-panel" aria-labelledby="tutor-title"><div><p class="eyebrow">OPTIONAL · GROUNDED IN YOUR SOLVED STATE</p><h2 id="tutor-title">Ask about what you see.</h2><p class="fine">The server re-solves your inputs before explaining. AI prose is always unverified.<br>Explain sends your system to your server and selected solved facts to Groq.<br>No background AI calls. No key is needed for the lab itself.</p></div><div class="tutor-input"><label class="sr-only" for="question">Question about the selected orbital</label><input id="question" type="text" maxlength="1000" placeholder="What does this orbital tell me?"><button id="explain" class="secondary" disabled>Explain ↗</button><p id="tutor-status" class="fine" role="status">Checking the optional tutor connection…</p><div id="tutor-response"></div></div></section>
+  </main>
+  <footer><span>OrbitalBoard · Built for understanding.</span><span>No accounts. No analytics. No hidden computations.</span></footer>
+</body>
+</html>

@@ -62,7 +62,7 @@ One local warm run of `npm run benchmark`: 15 warmups, 100 samples per small sys
 
 The flagship small cases fit the proposed single-frame budget on this machine. The 30-atom example **does not**. Systems with more than 32 basis functions carry a large-system warning. The worker avoids blocking the main thread; frame-time guarantees, drag coalescing, device-dependent interactive caps and faster large-matrix algorithms remain Stage 0.2 work. No 3D-surface latency is reported because surfaces are not implemented.
 
-## Explicit gaps
+## Stage 0.1 gaps at that milestone
 
 - No recovered prototype oracle, no YAeHMOP executable comparison and no PySCF SCF energy comparison.
 - No experimental CO2 photoelectron validation or sourced AX2 reference-angle panel.
@@ -70,3 +70,28 @@ The flagship small cases fit the proposed single-frame budget on this machine. T
 - No full point-group solver or symmetry adaptation of accidentally degenerate mixed-symmetry eigenspaces.
 - No browser/device/3D rendering or accessibility test yet; the worker unit test exercises the handler, not a real browser worker.
 - CI is configured locally, not claimed to have passed remotely.
+
+## Stage 0.2 local evidence — October 11, 2026
+
+The lab now adds real browser/worker/WebGL and backend evidence; the Stage 0.1 snapshot above is retained as historical data, not a statement that browser views are still absent.
+
+- **81 Node tests passed**, including direct-vs-separable wavefunction grids and interpolation checks for both positive/negative marching-cubes meshes.
+- **9 Flask/unittest checks passed**: server-side recomputation, rejected client numbers, absent-key behavior, mocked valid/invalid provider responses, numeric/schema gates, cross-origin rejection, local rate limits, body limits and static/CSP behavior.
+- **9 Playwright Chromium flows passed**: explicit intent, charge/geometry edits, stale-state protection, matrix inspection, scans, XYZ failures/inert comment text, both themes, keyboard tabs, mobile layout, clouds and measured browser performance.
+- Dark/light/mobile screenshots were generated and visually inspected. Screenshots are evidence captures, not a committed pixel-diff baseline. CSS ink/muted text contrast against the panel passes the 4.5:1 check in both themes.
+- The independent Python oracle still reproduces **22 cases and six curves**. The numerical engine and parameter versions remain unchanged.
+- `npm audit --omit=dev` reported zero known runtime dependency vulnerabilities on this date. No Docker image build/publish or remote CI run is claimed.
+
+One local headless Chromium 156 run on macOS arm64 (12 kernel warmups, 60 timed solves per case):
+
+| System | Browser solve kernel p95 (ms) | One 28³ field sample (ms) |
+| --- | --- | --- |
+| NH3 | 0.2 | 2.6 |
+| CO2 | 0.7 | 0.9 |
+| O2 | 0.2 | 1.8 |
+| H2O | 0.2 | 0.2 |
+| CH4 | 0.2 | 1.7 |
+
+The cold NH3 **worker + mesh creation** path measured **12 ms** in that run. This ends when the CPU mesh is ready; it is not a claim about first GPU paint, network startup or all-device latency. The proposed <16 ms small solve and <200 ms surface-computation targets are met in this local sample. Time thresholds are reported rather than made into flaky machine-specific CI gates. The large-system limitation from Stage 0.1 remains, and low-power device coverage is still open.
+
+Live Groq behavior/quality has **not** been exercised with a paid key; provider tests are mocks. Correct numeric membership is not proof of explanation semantics or units. The public-launch security, full accessibility and instructor/learner evaluation stages remain pending.

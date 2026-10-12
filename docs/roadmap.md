@@ -1,6 +1,6 @@
 # Roadmap / implementation status
 
-Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. Work in this delivery is restricted to **Stage 0.1**.
+Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository now includes **Stage 0.1 and the Stage 0.2 lab**.
 
 ## Stage 0.1
 
@@ -28,8 +28,23 @@ The unavailable Python prototype prevents claiming a faithful port or comparison
 | D5 | Always disclosed. Output is `orbitalEnergySumEV`, never total energy; bond-length optimization is absent. |
 | D6 | New parameters come from pinned source tables, are immutable, and are compared with independent PySCF data. This does not validate the choice of mixing Gaussian overlaps with Slater-model on-site energies. |
 
+## Stage 0.2
+
+- [x] Native-module lab UI without React or a bundler.
+- [x] Dark/light monochrome themes, semantic CSS tokens and contrast checks.
+- [x] Actual-wavefunction marching-cubes surfaces, probability clouds and orbit/zoom/atom drag.
+- [x] Energy ladder, raw matrix inspection, electron/charge/spin controls, log controls, angle scans and live JSON.
+- [x] Cited reality checks and model-limit warnings retained.
+- [x] Explicit first solve, coalesced live requests and stale-result protection.
+- [x] Flask read-only tutor scaffold with server recomputation, schema/numeric gate, CSP and local abuse limits.
+- [x] Browser/field/mesh/backend tests and dark/light/mobile screenshot capture.
+- [ ] Validate the proposed latency budgets on representative low-power devices, not just this machine.
+- [ ] Real-provider tutor evaluation; no paid API key was used in local tests.
+
+The numerical engine remains version **0.1.0**; the app is **0.2.0**. Its formulas/parameters were not silently changed for the UI. See `docs/lab.md` for the read-only, buffered tutor scope and public-launch limitations.
+
 ## Next stages — not implemented
 
-0.2 lab; 0.3 board/notebook/export; 0.4 Tier-2 registry/calculators/offline app; 0.5 ink; 0.6 tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
+0.3 board/notebook/export; 0.4 Tier-2 registry/calculators/offline app; 0.5 ink; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
 
 The solver contract exists now, but a multi-subject registry is not implemented. Accounts, instructor access, 3D formats, exam syllabus, board library and AI-provider decisions can wait until their stages. Preserve explicit intent, monochrome semantics and traceable numbers throughout.

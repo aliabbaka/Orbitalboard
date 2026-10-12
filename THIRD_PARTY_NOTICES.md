@@ -44,6 +44,10 @@ The H–Ne on-site IP values are transcribed from `tightbind/eht_parms.dat` at c
 
 OpenStax Chemistry 2e §8.4 is cited for diatomic bond-order/occupancy facts and standard diagram conventions. No questions, figures or prose are copied. Future textbook-content reuse must check the applicable licensing; source material is not assumed unrestricted.
 
+## three.js viewer
+
+The lab locally serves three.js 0.186.1 and its OrbitControls/MarchingCubes addons. The package is MIT-licensed; its notice remains in `node_modules/three/LICENSE` and is included with the locally served package and container. The numerical EHT engine does not depend on three.js. Playwright and TypeScript are development tools, not browser services or remote analytics.
+
 ## Project license
 
 A license for newly authored OrbitalBoard code has not been chosen by the owner. The `private` package flag prevents accidental npm publication; it does not select a software license or make the code public domain.
