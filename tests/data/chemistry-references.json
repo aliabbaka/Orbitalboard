@@ -1,0 +1,12 @@
+{
+  "sourceId": "openstax-mo",
+  "locator": "Chemistry 2e section 8.4, Figures 8.35–8.40 and Table 8.3. These are textbook expectations, not measured EHT eigenvalues.",
+  "diatomics": [
+    { "name": "H2", "bondOrder": 1, "unpaired": 0, "piBelowUpperBondingSigma": null },
+    { "name": "He2", "bondOrder": 0, "unpaired": 0, "piBelowUpperBondingSigma": null },
+    { "name": "C2", "bondOrder": 2, "unpaired": 0, "piBelowUpperBondingSigma": true },
+    { "name": "N2", "bondOrder": 3, "unpaired": 0, "piBelowUpperBondingSigma": true },
+    { "name": "O2", "bondOrder": 2, "unpaired": 2, "piBelowUpperBondingSigma": false },
+    { "name": "F2", "bondOrder": 1, "unpaired": 0, "piBelowUpperBondingSigma": false }
+  ]
+}

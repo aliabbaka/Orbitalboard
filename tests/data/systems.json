@@ -1,0 +1,59 @@
+{
+  "origin": "Developer-chosen test coordinates in angstrom, not asserted experimental geometries. Molecule names identify validation cases, not geometry reference claims.",
+  "systems": [
+    { "name": "H2", "state": { "units": "angstrom", "atoms": [
+      { "id": "h1", "element": "H", "position": [0, 0, -0.37] },
+      { "id": "h2", "element": "H", "position": [0, 0, 0.37] }
+    ] } },
+    { "name": "He2", "state": { "units": "angstrom", "atoms": [
+      { "id": "he1", "element": "He", "position": [0, 0, -0.5] },
+      { "id": "he2", "element": "He", "position": [0, 0, 0.5] }
+    ] } },
+    { "name": "C2", "state": { "units": "angstrom", "atoms": [
+      { "id": "c1", "element": "C", "position": [0, 0, -0.62] },
+      { "id": "c2", "element": "C", "position": [0, 0, 0.62] }
+    ] } },
+    { "name": "N2", "state": { "units": "angstrom", "atoms": [
+      { "id": "n1", "element": "N", "position": [0, 0, -0.55] },
+      { "id": "n2", "element": "N", "position": [0, 0, 0.55] }
+    ] } },
+    { "name": "O2", "state": { "units": "angstrom", "atoms": [
+      { "id": "o1", "element": "O", "position": [0, 0, -0.605] },
+      { "id": "o2", "element": "O", "position": [0, 0, 0.605] }
+    ] } },
+    { "name": "F2", "state": { "units": "angstrom", "atoms": [
+      { "id": "f1", "element": "F", "position": [0, 0, -0.71] },
+      { "id": "f2", "element": "F", "position": [0, 0, 0.71] }
+    ] } },
+    { "name": "CO2", "state": { "units": "angstrom", "atoms": [
+      { "id": "c", "element": "C", "position": [0, 0, 0] },
+      { "id": "o1", "element": "O", "position": [0, 0, 1.16] },
+      { "id": "o2", "element": "O", "position": [0, 0, -1.16] }
+    ] } },
+    { "name": "H2O", "state": { "units": "angstrom", "atoms": [
+      { "id": "o", "element": "O", "position": [0, 0, 0] },
+      { "id": "h1", "element": "H", "position": [0.76, 0, 0.59] },
+      { "id": "h2", "element": "H", "position": [-0.76, 0, 0.59] }
+    ] } },
+    { "name": "NH3", "state": { "units": "angstrom", "atoms": [
+      { "id": "n", "element": "N", "position": [0, 0, 0] },
+      { "id": "h1", "element": "H", "position": [0.94, 0, -0.38] },
+      { "id": "h2", "element": "H", "position": [-0.47, 0.8140638796, -0.38] },
+      { "id": "h3", "element": "H", "position": [-0.47, -0.8140638796, -0.38] }
+    ] } },
+    { "name": "CH4", "state": { "units": "angstrom", "atoms": [
+      { "id": "c", "element": "C", "position": [0, 0, 0] },
+      { "id": "h1", "element": "H", "position": [0.63, 0.63, 0.63] },
+      { "id": "h2", "element": "H", "position": [0.63, -0.63, -0.63] },
+      { "id": "h3", "element": "H", "position": [-0.63, 0.63, -0.63] },
+      { "id": "h4", "element": "H", "position": [-0.63, -0.63, 0.63] }
+    ] } },
+    { "name": "asymmetric-mixed", "state": { "units": "angstrom", "charge": 1, "atoms": [
+      { "id": "h", "element": "H", "position": [-1.2, 0.3, 0.7] },
+      { "id": "c", "element": "C", "position": [0, 0, 0] },
+      { "id": "n", "element": "N", "position": [1.4, -0.2, 0.6] },
+      { "id": "o", "element": "O", "position": [0.5, 1.3, -0.8] },
+      { "id": "f", "element": "F", "position": [2.1, 1.5, 1.1] }
+    ] } }
+  ]
+}
