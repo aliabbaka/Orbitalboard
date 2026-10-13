@@ -24,7 +24,7 @@ Content changes are logged as before/after deltas. Undo/redo and the scrubber ch
 
 Local board saving is explicit. Ink is not silently persisted in a draft. Pin is an explicit notebook save, separate from unrelated board ink. IndexedDB stores boards/notebooks on this browser/device; clearing browser storage removes them, so JSON/ZIP backups matter.
 
-Pins retain both monochrome image variants, alt text, date, notes/tags and either exact model/view state or a frozen selected-object region. Search, reorder, remove and edits are local. Optional AI captions send the pinned system to the server/provider only when requested; a draft is not stored until Accept. Accepted/edited AI captions stay marked **unverified**. Provider/units/pedagogical quality has not been evaluated with a real key.
+Pins retain both monochrome image variants, alt text, date, notes/tags and either exact model/view state or a frozen selected-object region. New pins merge into the saved local notebook rather than overwriting unrelated older entries. Search, reorder, remove and edits are local. Optional AI captions send the pinned system to the server/provider only when requested; a draft is not stored until Accept. Accepted/edited AI captions stay marked **unverified**. Provider/units/pedagogical quality has not been evaluated with a real key.
 
 Snapshots/images are attachments. Shared/uploaded PNG pixels are not cryptographically verified against scientific state and can be altered by an author; numerical results must be checked by reopening the pinned source. No claim of verified image provenance is made.
 

@@ -46,6 +46,7 @@ test('lab pin, editable notes, source-preserving reopening, PNG/SVG and Markdown
   const pngDownload = page.waitForEvent('download'); await page.locator('.pin-card').getByRole('button', { name: 'PNG', exact: true }).click(); const pngFile = await pngDownload; await pngFile.saveAs('test-results/note-card.png'); const png = await readFile(await pngFile.path()); expect(png.subarray(1, 4).toString()).toBe('PNG');
   const decoded = PNG.sync.read(png), qr = jsQR(new Uint8ClampedArray(decoded.data), decoded.width, decoded.height); expect(qr?.data).toContain('/#snapshot=');
   const zipDownload = page.waitForEvent('download'); await page.locator('#download-sheet').click(); const zip = await readFile(await (await zipDownload).path()); expect(zip.subarray(0, 2).toString()).toBe('PK');
+  await page.screenshot({ path: 'test-results/board-notebook.png', fullPage: true });
 });
 
 test('public links are read-only, owner updates are separate, remix leaves original unchanged', async ({ page, browser }) => {
@@ -95,6 +96,7 @@ test('mobile board and malformed imports retain current work', async ({ page }) 
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/board'); await write(page);
   await page.locator('#export-board').click(); await page.locator('#import-json').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"schemaVersion":99}') });
   await expect(page.locator('#board-status')).toContainText('current work retained'); await expect(page.locator('#board-canvas')).toContainText('NH3'); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/board-mobile.png', fullPage: true });
 });
 
 test('pinning a new board does not overwrite an older local notebook', async ({ page }) => {

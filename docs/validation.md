@@ -98,12 +98,14 @@ Live Groq behavior/quality has **not** been exercised with a paid key; provider 
 
 ## Stage 0.3 local evidence — October 12, 2026
 
-The board/notebook acceptance path was exercised in a real Chromium browser with AI disabled. The current suite passed **94 Node tests, 13 backend tests and 17 browser flows (124 total)** before the final UI polish; rerun the commands in README for current totals.
+The board/notebook acceptance path was exercised in a real Chromium browser with AI disabled. The Stage 0.3 suite contains **94 Node tests, 13 backend tests and 19 browser flows (126 total)**; rerun the commands in README for current totals.
 
 - Typed content stays unsolved until an action is chosen; semantic ink flips with theme. Content undo/redo and replay preserve source objects without replaying network/download side effects.
 - Builder inputs, structured Pauli/diagram checks, local JSON/IndexedDB restoration and unsafe/unavailable-version import rejection are covered.
 - A model is solved in the embedded lab, pinned, captioned and reopened from its frozen compressed state; the selected energy, versioned state and read-only controls match. Source links are not reconstructed from rounded DOM readouts.
 - PNG and SVG note cards include sources and alt text; Markdown/PNG ZIP bytes and actual browser-produced PDF bytes are checked. Static image pixels remain unverified attachments.
+- A note-card PNG's actual QR is decoded independently using jsQR, not inferred from decorative SVG presence. QR modules are rasterized at integer sizes to avoid unreadable fractional scaling.
+- Pinning from a new board preserves older local notebook entries. Frozen region links retain their original text after the source is edited.
 - Public links return documents without owner tokens. Missing credentials cannot edit/delete; revision conflicts retain the last saved data; SQLite persists across app instances.
 - GLB is parsed back by GLTFLoader and retains named phases/version extras. OBJ, PLY and STL are read back by independent loaders; PLY phase scalars, closed/oriented STL edges and print scale are checked. Cube axes/order/values match the screen field; XYZ atom coordinates round-trip.
 - Model STL is deliberately restricted to one closed orbital phase without atom/connector intersections; no claim of universal slicer/self-intersection certification is made.
