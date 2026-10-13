@@ -95,3 +95,18 @@ One local headless Chromium 156 run on macOS arm64 (12 kernel warmups, 60 timed 
 The cold NH3 **worker + mesh creation** path measured **12 ms** in that run. This ends when the CPU mesh is ready; it is not a claim about first GPU paint, network startup or all-device latency. The proposed <16 ms small solve and <200 ms surface-computation targets are met in this local sample. Time thresholds are reported rather than made into flaky machine-specific CI gates. The large-system limitation from Stage 0.1 remains, and low-power device coverage is still open.
 
 Live Groq behavior/quality has **not** been exercised with a paid key; provider tests are mocks. Correct numeric membership is not proof of explanation semantics or units. The public-launch security, full accessibility and instructor/learner evaluation stages remain pending.
+
+## Stage 0.3 local evidence — October 12, 2026
+
+The board/notebook acceptance path was exercised in a real Chromium browser with AI disabled. The current suite passed **94 Node tests, 13 backend tests and 17 browser flows (124 total)** before the final UI polish; rerun the commands in README for current totals.
+
+- Typed content stays unsolved until an action is chosen; semantic ink flips with theme. Content undo/redo and replay preserve source objects without replaying network/download side effects.
+- Builder inputs, structured Pauli/diagram checks, local JSON/IndexedDB restoration and unsafe/unavailable-version import rejection are covered.
+- A model is solved in the embedded lab, pinned, captioned and reopened from its frozen compressed state; the selected energy, versioned state and read-only controls match. Source links are not reconstructed from rounded DOM readouts.
+- PNG and SVG note cards include sources and alt text; Markdown/PNG ZIP bytes and actual browser-produced PDF bytes are checked. Static image pixels remain unverified attachments.
+- Public links return documents without owner tokens. Missing credentials cannot edit/delete; revision conflicts retain the last saved data; SQLite persists across app instances.
+- GLB is parsed back by GLTFLoader and retains named phases/version extras. OBJ, PLY and STL are read back by independent loaders; PLY phase scalars, closed/oriented STL edges and print scale are checked. Cube axes/order/values match the screen field; XYZ atom coordinates round-trip.
+- Model STL is deliberately restricted to one closed orbital phase without atom/connector intersections; no claim of universal slicer/self-intersection certification is made.
+- `npm audit --omit=dev` reports zero known runtime vulnerabilities after updating fflate to 0.8.3. No Docker build, external deployment, paid-provider evaluation or manually tested Blender/VMD/note-app certification is claimed.
+
+Limits and deliberate grammar restrictions are in `docs/board.md`; larger/malformed states fail explicitly instead of inventing results or silently changing solver versions.

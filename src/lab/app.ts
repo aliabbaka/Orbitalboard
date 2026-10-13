@@ -7,6 +7,9 @@ import { BOHR_ANGSTROM, SOURCES } from '../data/parameters.js';
 import { DIATOMIC_REFERENCES } from '../data/chemistry-references.js';
 import { PRESETS, changeAngle, changeDistance, coordinateAngle, coordinateDistance, positionsAngstrom, sliderToValue, valueToSlider } from './model.js';
 import { MolecularViewer } from './viewer.js';
+import { installBoardBridge } from './board-bridge.js';
+import { makeSnapshot } from '../board/snapshot.js';
+import type { ModelSnapshot } from '../board/types.js';
 
 type Scan = ReturnType<typeof scanAngle>;
 const el = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -51,6 +54,7 @@ let solveBusy = false, surfaceBusy = false, surfaceWanted = 0, surfaceRendered =
 let solveWanted = false;
 let solveFrame = 0, scanTimer = 0, scanRequested = false, scanSequence = 0;
 let tutorAvailable = false, viewer: MolecularViewer | null = null;
+let lockedSnapshot = false, restoredView: ModelSnapshot['view'] | null = null;
 document.body.dataset.solveCount = '0';
 
 let theme: string;
@@ -70,8 +74,15 @@ try {
     state = { ...state, atoms: state.atoms.map(a => a.id === id ? { ...a, position: p } : a) }; touch();
   });
 } catch { el('viewer-unavailable').hidden = false; }
+if (viewer) viewer.onPlace = position => {
+  if (lockedSnapshot || state.atoms.length >= 30) { el('status').textContent = 'Remix a locked snapshot first; systems are capped at 30 atoms.'; return; }
+  const p = position.map(x => state.units === 'bohr' ? x / BOHR_ANGSTROM : x) as unknown as Vec3;
+  state = { ...state, atoms: [...state.atoms, { id: `atom-${crypto.randomUUID().slice(0, 8)}`, element: select('place-element').value, position: p }] }; populateAtoms(); touch();
+};
+button('place-atoms').onclick = () => { const enabled = button('place-atoms').getAttribute('aria-pressed') !== 'true'; button('place-atoms').setAttribute('aria-pressed', String(enabled)); viewer?.setPlaceEnabled(enabled); el('status').textContent = enabled ? 'Click in the 3D view to place an atom in the camera-target plane. Coordinate fields provide precise/keyboard placement.' : 'Atom placement off.'; };
 setTheme(theme);
 button('theme').onclick = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+window.addEventListener('storage', event => { if (event.key === 'orbitalboard-theme' && event.newValue) setTheme(event.newValue); });
 button('reset-camera').onclick = () => viewer?.resetCamera();
 button('drag-atoms').onclick = () => {
   const enabled = button('drag-atoms').getAttribute('aria-pressed') !== 'true';
@@ -85,6 +96,8 @@ function actions(): void {
   button('lumo').disabled = !fresh() || !result!.lumoIndices.length;
   button('scan').disabled = !fresh() || state.atoms.length < 3 || new Set(selectedIds()).size < 3;
   button('copy-state').disabled = !fresh(); button('explain').disabled = !fresh() || !tutorAvailable;
+  const surfaceReady = fresh() && (!viewer || select('view-mode').value === 'molecule' || (field !== null && field.orbitalIndex === selectedOrbital));
+  button('pin-lab').disabled = !surfaceReady; button('export-model').disabled = !fresh();
 }
 function clearNote(): void { el('tutor-response').replaceChildren(); }
 function populateAtoms(): void {
@@ -195,7 +208,9 @@ async function runSolve(): Promise<void> {
     el('electron-count').textContent = String(next.electronCount); el('unpaired').textContent = String(next.unpairedElectrons);
     el('bond-order').textContent = fmt(next.textbookBondOrder, 2); el('gap').textContent = fmt(next.frontierGapEV);
     el('provenance').textContent = `Computed · EHT ${next.provenance.solverVersion} · ${next.provenance.parameterVersion}`;
+    if (restoredView) { selectedOrbital = restoredView.orbital; restoredView = null; }
     renderLadder(); renderReality(); renderMatrix(); renderState(); chooseOrbital(selectedOrbital); actions();
+    if (lockedSnapshot) setSnapshotLock(true);
     if (scanRequested && input('live').checked) { clearTimeout(scanTimer); scanTimer = window.setTimeout(() => void runScan(), 180); }
   } catch (error) { if (requestedRevision === revision) { el('status').textContent = `Could not solve: ${(error as Error).message}`; actions(); } }
   finally { solveBusy = false; if (solveWanted || (requestedRevision !== revision && authorized && input('live').checked)) scheduleSolve(); }
@@ -231,6 +246,7 @@ function chooseOrbital(index: number): void {
   }));
   for (const level of el('ladder').querySelectorAll('button')) level.setAttribute('aria-pressed', String(Number(level.dataset.orbital) === index));
   field = null; viewer?.clearField(); surfaceWanted++; void renderSurface();
+  actions();
 }
 button('homo').onclick = () => { if (fresh()) chooseOrbital(result!.homoIndices[0]); };
 button('lumo').onclick = () => { if (fresh()) chooseOrbital(result!.lumoIndices[0]); };
@@ -238,8 +254,8 @@ button('lumo').onclick = () => { if (fresh()) chooseOrbital(result!.lumoIndices[
 function isovalue(): number { return sliderToValue(Number(input('isovalue').value), 0.005, 0.2); }
 el('iso-value').textContent = isovalue().toFixed(3);
 input('isovalue').oninput = () => { el('iso-value').textContent = isovalue().toFixed(3); if (field) showField(); };
-select('view-mode').onchange = () => { input('isovalue').disabled = select('view-mode').value !== 'surface'; if (field) showField(); else if (fresh()) { surfaceWanted++; void renderSurface(); } };
-select('resolution').onchange = () => { field = null; surfaceWanted++; if (fresh()) void renderSurface(); };
+select('view-mode').onchange = () => { input('isovalue').disabled = select('view-mode').value !== 'surface'; actions(); if (field) showField(); else if (fresh()) { surfaceWanted++; void renderSurface(); } };
+select('resolution').onchange = () => { field = null; surfaceWanted++; actions(); if (fresh()) void renderSurface(); };
 async function renderSurface(): Promise<void> {
   if (surfaceBusy || !fresh() || !viewer) return;
   if (select('view-mode').value === 'molecule') { viewer.clearField(); return; }
@@ -251,6 +267,7 @@ async function renderSurface(): Promise<void> {
     field = sampled; surfaceRendered = ticket; showField();
     document.body.dataset.surfaceTime = String(performance.now() - start);
     el('viewport').dataset.surfaceOrbital = String(orbital);
+    actions();
   } catch (error) { if (ticket === surfaceWanted) el('surface-status').textContent = `Surface unavailable: ${(error as Error).message}`; }
   finally { surfaceBusy = false; if (surfaceWanted !== ticket && surfaceRendered !== surfaceWanted && fresh()) void renderSurface(); }
 }
@@ -397,6 +414,30 @@ button('explain').onclick = async () => {
 };
 
 resetSystem(state);
+installBoardBridge({
+  current: () => {
+    if (!fresh()) return null;
+    const snapshot = makeSnapshot(result!.provenance.input);
+    snapshot.view = { orbital: selectedOrbital, mode: select('view-mode').value as ModelSnapshot['view']['mode'], isovalue: isovalue(), resolution: Number(select('resolution').value), camera: viewer?.cameraState() ?? null };
+    return { result: result!, snapshot, viewer };
+  },
+  ready: () => !button('pin-lab').disabled,
+  load: (snapshot, locked, defaultHomo) => {
+    lockedSnapshot = false; resetSystem(snapshot.state); restoredView = defaultHomo ? null : snapshot.view;
+    select('view-mode').value = snapshot.view.mode; select('resolution').value = String(snapshot.view.resolution);
+    input('isovalue').value = String(valueToSlider(snapshot.view.isovalue, 0.005, 0.2)); el('iso-value').textContent = snapshot.view.isovalue.toFixed(3);
+    if (snapshot.view.camera) viewer?.restoreCamera(snapshot.view.camera);
+    lockedSnapshot = locked; setSnapshotLock(locked); authorized = true; scheduleSolve();
+  },
+});
+function setSnapshotLock(locked: boolean): void {
+  for (const id of ['preset', 'load-xyz', 'charge', 'spin', 'k', 'distance', 'distance-value', 'angle', 'angle-value', 'center-atom', 'fixed-atom', 'moving-atom', 'drag-atoms', 'place-atoms', 'place-element']) (el(id) as HTMLInputElement).disabled = locked;
+  el('coordinates').querySelectorAll<HTMLInputElement>('input').forEach(i => { i.disabled = locked; });
+  button('snapshot-remix').hidden = !locked;
+  if (locked) { viewer?.setMoveEnabled(false); viewer?.setPlaceEnabled(false); button('drag-atoms').setAttribute('aria-pressed', 'false'); button('place-atoms').setAttribute('aria-pressed', 'false'); }
+  else syncGeometry();
+}
+button('snapshot-remix').onclick = () => { lockedSnapshot = false; setSnapshotLock(false); el('status').textContent = 'Remix: you can now edit this local snapshot. The original saved state is unchanged.'; };
 void fetch('/api/health').then(response => response.json()).then(data => {
   tutorAvailable = data.tutorAvailable === true; el('tutor-status').textContent = tutorAvailable ? 'Ready after you solve a system. Explanation runs only when you request it.' : 'AI not configured · set GROQ_API_KEY on the server to enable it. All lab features work without AI.'; actions();
 }).catch(() => { el('tutor-status').textContent = 'Tutor backend unavailable. The browser engine still works.'; });

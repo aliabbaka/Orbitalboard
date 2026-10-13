@@ -48,6 +48,10 @@ OpenStax Chemistry 2e §8.4 is cited for diatomic bond-order/occupancy facts and
 
 The lab locally serves three.js 0.186.1 and its OrbitControls/MarchingCubes addons. The package is MIT-licensed; its notice remains in `node_modules/three/LICENSE` and is included with the locally served package and container. The numerical EHT engine does not depend on three.js. Playwright and TypeScript are development tools, not browser services or remote analytics.
 
+## QR and note bundles
+
+`qrcode-generator` 2.0.4 (Kazuhiko Arase) generates actual QR matrices; `fflate` 0.8.3 creates local Markdown/PNG ZIP bundles. Both are MIT-licensed; original notices remain in the installed packages and container copies. Only locally served, pinned modules are used; neither service sends data to a third party. The ZIP dependency was checked against the published malformed-ZIP64 advisory and updated to the fixed version; the app only creates ZIPs, not imports arbitrary archives.
+
 ## Project license
 
 A license for newly authored OrbitalBoard code has not been chosen by the owner. The `private` package flag prevents accidental npm publication; it does not select a software license or make the code public domain.

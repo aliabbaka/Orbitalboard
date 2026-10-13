@@ -34,6 +34,8 @@ export class MolecularViewer {
   private mode = 'surface';
   private isovalue = 0.04;
   private moveEnabled = false;
+  private placeEnabled = false;
+  onPlace: ((position: Vec3) => void) | null = null;
   private dragging: { id: string; plane: THREE.Plane; offset: THREE.Vector3 } | null = null;
   private readonly raycaster = new THREE.Raycaster();
   private framePending = false;
@@ -103,6 +105,7 @@ export class MolecularViewer {
     state.atoms.forEach((atom, i) => {
       const sphere = new THREE.Mesh(new THREE.SphereGeometry(sizes[atom.element] ?? 0.15, 20, 14), new THREE.MeshStandardMaterial({ color: ink, roughness: 0.5 }));
       sphere.position.set(...positions[i]); sphere.userData.atomId = atom.id; this.atoms.add(sphere); this.atomMeshes.push(sphere);
+      sphere.name = `atom_${atom.element}_${atom.id}`;
       const label = this.label(atom.element, 0.30); label.position.copy(sphere.position).add(new THREE.Vector3(0, 0.28, 0)); this.atoms.add(label);
       for (let j = 0; j < i; j++) {
         const a = new THREE.Vector3(...positions[j]), b = new THREE.Vector3(...positions[i]);
@@ -111,6 +114,7 @@ export class MolecularViewer {
         if (distance > cutoff || distance < 0.15) continue;
         const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, distance, 10), new THREE.MeshStandardMaterial({ color: ink }));
         stick.position.copy(a).add(b).multiplyScalar(0.5);
+        stick.name = `proximity_connector_${state.atoms[j].id}_${atom.id}`;
         stick.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.sub(a).normalize()); this.atoms.add(stick);
       }
     });
@@ -143,6 +147,7 @@ export class MolecularViewer {
         geometry.setAttribute('position', new THREE.BufferAttribute(cubes.positionArray.slice(0, cubes.count * 3), 3));
         geometry.setAttribute('normal', new THREE.BufferAttribute(cubes.normalArray.slice(0, cubes.count * 3), 3));
         const mesh = new THREE.Mesh(geometry, material);
+        mesh.name = sign > 0 ? 'phase_positive' : 'phase_negative'; mesh.userData = { phase: sign, renderStyle: sign > 0 ? 'solid' : 'wireframe' };
         mesh.scale.setScalar(field.extentBohr * BOHR_ANGSTROM / 2);
         mesh.position.set(...field.centerBohr.map(x => x * BOHR_ANGSTROM) as [number, number, number]);
         phase.add(mesh); vertices += cubes.count; cubes.geometry.dispose();
@@ -180,6 +185,35 @@ export class MolecularViewer {
   }
 
   setMoveEnabled(enabled: boolean): void { this.moveEnabled = enabled; this.renderer.domElement.style.cursor = enabled ? 'crosshair' : 'grab'; }
+  setPlaceEnabled(enabled: boolean): void { this.placeEnabled = enabled; this.renderer.domElement.style.cursor = enabled ? 'crosshair' : 'grab'; }
+
+  cameraState(): { position: [number, number, number]; target: [number, number, number] } {
+    return { position: this.camera.position.toArray() as [number, number, number], target: this.controls.target.toArray() as [number, number, number] };
+  }
+  restoreCamera(camera: { position: [number, number, number]; target: [number, number, number] }): void {
+    this.camera.position.set(...camera.position); this.controls.target.set(...camera.target); this.controls.update(); this.render();
+  }
+  capture(theme: 'dark' | 'light'): string {
+    const previous = this.dark; this.setTheme(theme === 'dark');
+    this.renderer.render(this.scene, this.camera);
+    const canvas = document.createElement('canvas'); const source = this.renderer.domElement;
+    const ratio = Math.min(1, 1100 / source.width, 800 / source.height); canvas.width = Math.round(source.width * ratio); canvas.height = Math.round(source.height * ratio);
+    canvas.getContext('2d')!.drawImage(source, 0, 0, canvas.width, canvas.height);
+    const image = canvas.toDataURL('image/png'); this.setTheme(previous); this.renderer.render(this.scene, this.camera); return image;
+  }
+  exportRoot(): THREE.Group {
+    this.scene.updateMatrixWorld(true); const root = new THREE.Group();
+    for (const source of [this.atoms, ...this.surfaces.children]) {
+      const group = new THREE.Group(); group.name = source === this.atoms ? 'atoms_and_proximity_connectors' : source.name;
+      source.traverse(object => {
+        const mesh = object as THREE.Mesh;
+        if (!mesh.isMesh && !(object as THREE.Points).isPoints) return;
+        const copy = object.clone(false); copy.matrix.copy(object.matrixWorld); copy.matrixAutoUpdate = false; group.add(copy);
+      });
+      root.add(group);
+    }
+    return root;
+  }
 
   private ray(event: PointerEvent): THREE.Raycaster {
     const rect = this.renderer.domElement.getBoundingClientRect();
@@ -188,6 +222,12 @@ export class MolecularViewer {
   }
 
   private pointerDown(event: PointerEvent): void {
+    if (this.placeEnabled && event.button === 0) {
+      const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(this.camera.getWorldDirection(new THREE.Vector3()), this.controls.target);
+      const position = new THREE.Vector3();
+      if (this.ray(event).ray.intersectPlane(plane, position)) { event.stopImmediatePropagation(); this.onPlace?.(position.toArray() as [number, number, number]); }
+      return;
+    }
     if (!this.moveEnabled || event.button !== 0) return;
     const hit = this.ray(event).intersectObjects(this.atomMeshes)[0];
     if (!hit) return;

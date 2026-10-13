@@ -13,25 +13,30 @@ from collections import OrderedDict, deque
 from flask import Flask, abort, jsonify, request, send_from_directory
 
 from backend.tutor import TutorError, build_context, fetch_explanation, verify_explanation
+from backend.boards import BoardError, BoardStore
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def create_app(config=None):
     app = Flask(__name__, static_folder=None)
-    app.config.update(MAX_CONTENT_LENGTH=65536, RATE_LIMIT=12, RATE_WINDOW=60)
+    app.config.update(MAX_CONTENT_LENGTH=65536, RATE_LIMIT=12, RATE_WINDOW=60,
+                      BOARD_DB=os.environ.get('BOARD_DB_PATH', str(ROOT / 'var/boards.sqlite3')), BOARD_QUOTA=100)
     if config:
         app.config.update(config)
     calls = OrderedDict()
     lock = threading.Lock()
+    boards = BoardStore(app.config['BOARD_DB'], ROOT, app.config['BOARD_QUOTA'])
 
     @app.before_request
     def guard():
-        if request.path.startswith("/api/tutor/"):
+        if request.path.startswith('/api/boards'):
+            request.max_content_length = 4 * 1024 * 1024 + 65536
+        if request.path.startswith("/api/tutor/") or (request.path.startswith('/api/boards') and request.method != 'GET'):
             # Same-origin browser calls only; no broad CORS or proxy-header trust.
             origin = request.headers.get("Origin")
             if origin and origin != request.host_url.rstrip("/"):
-                return jsonify(error="Cross-origin tutor requests are not allowed."), 403
+                return jsonify(error="Cross-origin data requests are not allowed."), 403
             address = request.remote_addr or "unknown"
             now = time.monotonic()
             with lock:
@@ -43,7 +48,7 @@ def create_app(config=None):
                 while recent and now - recent[0] >= app.config["RATE_WINDOW"]:
                     recent.popleft()
                 if len(recent) >= app.config["RATE_LIMIT"]:
-                    response = jsonify(error="Too many tutor requests. Wait a minute and try again.")
+                    response = jsonify(error="Too many data requests. Wait a minute and try again.")
                     response.headers["Retry-After"] = str(app.config["RATE_WINDOW"])
                     return response, 429
                 recent.append(now)
@@ -53,7 +58,7 @@ def create_app(config=None):
     def headers(response):
         nonce = getattr(request, "csp_nonce", None)
         script = "'self'" + (f" 'nonce-{nonce}'" if nonce else "")
-        response.headers["Content-Security-Policy"] = f"default-src 'self'; script-src {script}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+        response.headers["Content-Security-Policy"] = f"default-src 'self'; script-src {script}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'self'"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
@@ -65,10 +70,65 @@ def create_app(config=None):
         request.csp_nonce = secrets.token_urlsafe(18)
         return (ROOT / "web/index.html").read_text().replace("__CSP_NONCE__", request.csp_nonce)
 
+    @app.get('/board')
+    @app.get('/b/<board_id>')
+    def board_page(board_id=None):
+        if board_id:
+            try:
+                boards.get(board_id)
+            except BoardError as error:
+                return jsonify(error=str(error)), error.status
+        request.csp_nonce = secrets.token_urlsafe(18)
+        return (ROOT / 'web/board.html').read_text().replace('__CSP_NONCE__', request.csp_nonce)
+
     @app.get("/styles.css")
     @app.get("/favicon.svg")
+    @app.get('/board.css')
     def assets():
         return send_from_directory(ROOT / "web", request.path.lstrip("/"))
+
+    @app.get('/vendor/qrcode/qrcode.mjs')
+    def qr_module():
+        return send_from_directory(ROOT / 'node_modules/qrcode-generator/dist', 'qrcode.mjs')
+
+    @app.get('/vendor/fflate/browser.js')
+    def zip_module():
+        return send_from_directory(ROOT / 'node_modules/fflate/esm', 'browser.js')
+
+    @app.get('/api/boards/<board_id>')
+    def get_board(board_id):
+        try:
+            return jsonify(boards.get(board_id))
+        except BoardError as error:
+            return jsonify(error=str(error)), error.status
+
+    def document_body():
+        body = request.get_json(silent=True) if request.is_json else None
+        if not isinstance(body, dict) or set(body) != {'document'}:
+            raise BoardError('Send a JSON object with only a document field.')
+        return body['document']
+
+    @app.post('/api/boards')
+    def create_board():
+        try:
+            return jsonify(boards.create(document_body())), 201
+        except BoardError as error:
+            return jsonify(error=str(error)), error.status
+
+    @app.put('/api/boards/<board_id>')
+    def update_board(board_id):
+        try:
+            return jsonify(boards.update(board_id, document_body(), request.headers.get('Authorization', ''), request.headers.get('If-Match', '').strip('"')))
+        except BoardError as error:
+            return jsonify(error=str(error)), error.status
+
+    @app.delete('/api/boards/<board_id>')
+    def delete_board(board_id):
+        try:
+            boards.delete(board_id, request.headers.get('Authorization', ''))
+            return jsonify(ok=True)
+        except BoardError as error:
+            return jsonify(error=str(error)), error.status
 
     @app.get("/dist/<path:filename>")
     def modules(filename):
@@ -89,7 +149,7 @@ def create_app(config=None):
 
     @app.get("/api/health")
     def health():
-        return jsonify(ok=True, stage="0.2", tutorAvailable=bool(os.environ.get("GROQ_API_KEY")),
+        return jsonify(ok=True, stage="0.3", tutorAvailable=bool(os.environ.get("GROQ_API_KEY")),
                        engineAvailable=bool(shutil.which("node")) and (ROOT / "dist/index.js").is_file())
 
     def recompute():
@@ -136,7 +196,7 @@ def create_app(config=None):
 
     @app.errorhandler(413)
     def oversized(_):
-        return jsonify(error="Request exceeds the 64 KiB limit."), 413
+        return jsonify(error="Request exceeds its size limit (4 MiB board / 64 KiB tutor)."), 413
 
     return app
 

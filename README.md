@@ -1,6 +1,6 @@
 # OrbitalBoard
 
-A chemistry and math learning tool where **solvers compute and AI interprets**. The **Stage 0.2 molecular lab** is now usable: a monochrome 3D viewer, energy ladder, geometry/electron controls, matrices, scans and reality checks, built on the validated Stage 0.1 engine. The whiteboard and notebook are the next stage.
+A chemistry and math learning tool where **solvers compute and AI interprets**. **Stage 0.3: Board and Notebook** adds a selectable monochrome whiteboard, structured system builder, history, local notes, read-only sharing, source-linked exports and model downloads, built on the validated engine and molecular lab.
 
 The supplied October 9, 2026 plan (v2.2) is the product direction. Its `eht_engine.py` prototype was unavailable, so this is a new implementation, **not a verified port** of the reported prototype.
 
@@ -15,9 +15,23 @@ python3 -m venv .venv
 npm start
 ```
 
-Open **http://127.0.0.1:5001**. Pick a preset or load XYZ, then **Solve**. Drag to orbit, or enable **Move atoms** to change coordinates. Keyboard coordinate fields, charge/spin controls, bond-distance and angle controls offer the same input path. Computed levels and surfaces update only after that explicit first solve; loading a new system resets permission. Turn off live updates to require another Solve for each change.
+Open **http://127.0.0.1:5001/board** for the whiteboard, or **http://127.0.0.1:5001/** for the standalone lab.
 
-Do not double-click `web/index.html`: modules and workers must be served over HTTP. `npm start` builds and starts the local Flask server; `PORT=5002 npm start` chooses another port. This is a lab, not yet a freehand whiteboard.
+**Board:** choose Text/formula, click the board, type `NH3`, then select it and choose **3D model**, **Orbitals** or **Answer**. Writing alone does not solve. Pen strokes remain ink; handwriting recognition is later. System builder accepts presets, XYZ and freely editable atoms. A formula without a known template is not assigned a guessed geometry.
+
+**Lab:** choose a preset/XYZ, then Solve. Drag to orbit, enable Move atoms to drag them, or Place atoms to free-build in the camera-target plane. Coordinate fields provide the keyboard/precise alternative. Pin snapshot opens/transfers into the local notebook; Download model offers GLB, OBJ, PLY, gated STL, cube and XYZ. Live updates run only after the explicit first solve.
+
+Do not double-click `web/index.html` or `web/board.html`: modules and workers must be served over HTTP. `npm start` builds and starts the local Flask server; `PORT=5002 npm start` chooses another port.
+
+### Save, share and export
+
+- **Save locally** persists the board in this browser's IndexedDB. Reloading starts a fresh unsaved board; use **Restore local** explicitly. Pinning explicitly saves the notebook only, not unrelated draft ink.
+- **Save/share** uploads only when pressed. Links are `/b/<random-id>` and read-only by default. Owner tokens stay in the saving browser, never in public URLs, QR codes or board JSON. **Owner edit** enables local editing; publishing still needs Save shared board. **Remix** makes a separate local copy.
+- Shared boards live in ignored `var/boards.sqlite3`, or `BOARD_DB_PATH`. They persist across server restarts, until owner/operator deletion. Use a persistent `/app/var` volume for containers. This is local SQLite storage, not an account/cloud-sync service.
+- Sharing omits history/erased content by default and prunes unused sources/images. Explicitly including history may reveal erased content; the dialog says so. Local drafts remain intact on failed saves/conflicts.
+- Pins capture both theme variants, source versions and exact model/camera or board-region state. Reopen links replay frozen sources; old/unavailable versions are rejected, never silently upgraded.
+- Export PNG, SVG, full JSON, clipboard image/text/Markdown/link, Markdown+PNG ZIP bundles, or print/Save as PDF. ZIP uses standard relative PNG paths for note apps that reject inline image data URLs. Static image pixels are attachments, not independent proof of their scientific contents; reopen the source for verified numbers.
+- Loopback links work on this machine only. Cross-device links require hosting the app. No image has been deployed/published by this work.
 
 ### Tests and inspection
 
@@ -62,7 +76,7 @@ console.log(result.provenance);              // Computed + versions + inputs + s
 console.log(result.warnings);                // Includes the O2 ordering limitation
 ```
 
-Inputs use stable atom IDs, explicit `angstrom` or `bohr` units, optional integer `charge`, optional `multiplicity`, and optional Wolfsberg–Helmholz `k`. Geometry is arbitrary; named molecules are only validation cases. A formula alone does not determine coordinates, so formula-to-geometry templates belong to a later stage.
+Inputs use stable atom IDs, explicit `angstrom` or `bohr` units, optional integer `charge`, optional `multiplicity`, and optional Wolfsberg–Helmholz `k`. Geometry is arbitrary; named molecules are only validation cases. Templates are illustrative starting inputs, not inferred unique structures or optimized geometries.
 
 ### Off-main-thread use
 
@@ -102,6 +116,10 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 - Dark/light, monochrome-safe 3D orbital surfaces and grid-sampled density clouds.
 - Presets/XYZ, live what-if controls, computed energy ladder, matrix inspection, angle charts and source-linked reality checks.
 - Responsive lab UI, a server-recomputed optional tutor bridge, CSP and request-size/rate limits.
+- Custom SVG whiteboard, rectangle/Shift selection, semantic pen/eraser/text, explicit action bar, structured diagram comparison and content undo/redo/replay.
+- Local notebook with frozen snapshots, editable notes/tags, search/reorder and explicit AI-caption acceptance (always unverified).
+- Validated board sharing, separate hashed owner tokens, optimistic revision checks and owner-only deletion.
+- Source-linked image/vector/Markdown/PDF/JSON exports and six 3D/chemistry download formats with reader/manifold checks.
 
 **Enabled:** H, He, C, N, O, F, with documented model limits. **Sourced but disabled:** Li, Be, B, Ne pending chemical reference checks. Transition metals and d orbitals are unsupported. The 30-atom safety cap is not a 16 ms performance guarantee; large systems explicitly warn and should run in the worker.
 
@@ -109,9 +127,10 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 
 - [Methods, definitions and limitations](docs/methods.md)
 - [Using the lab and its architecture](docs/lab.md)
+- [Board, notes, sharing and export contract](docs/board.md)
 - [Measured validation](docs/validation.md)
 - [CircuitLab code audit](docs/circuitlab-audit.md)
 - [Roadmap and defect status](docs/roadmap.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-The next planned milestone is **Stage 0.3: Board and Notebook**. Accounts, sharing, freehand ink, model downloads, broad chemistry/math calculators and the full tool-calling tutor are not implemented yet.
+The next planned milestone is **Stage 0.4: Tier 2 solvers and offline app support**. Handwriting recognition, broad math/chemistry solving, the full tool-calling tutor, curriculum/mastery, accounts and public-launch hardening remain later stages.

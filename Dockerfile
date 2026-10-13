@@ -15,13 +15,16 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/node_modules/three ./node_modules/three
+COPY --from=build /app/node_modules/qrcode-generator ./node_modules/qrcode-generator
+COPY --from=build /app/node_modules/fflate ./node_modules/fflate
 COPY web ./web
 COPY backend ./backend
 COPY docs ./docs
 COPY scripts/solve-stdin.mjs ./scripts/solve-stdin.mjs
+COPY scripts/validate-board.mjs ./scripts/validate-board.mjs
 COPY THIRD_PARTY_NOTICES.md ./
 COPY licenses ./licenses
-RUN useradd --create-home --uid 10001 orbitalboard
+RUN useradd --create-home --uid 10001 orbitalboard && mkdir -p /app/var && chown orbitalboard:orbitalboard /app/var
 USER orbitalboard
 EXPOSE 5001
 CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT:-5001} --workers 1 --threads 4 --timeout 30 backend.app:app"]

@@ -1,6 +1,6 @@
 # Roadmap / implementation status
 
-Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository now includes **Stage 0.1 and the Stage 0.2 lab**.
+Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository now includes **Stages 0.1, 0.2 and 0.3**.
 
 ## Stage 0.1
 
@@ -43,8 +43,23 @@ The unavailable Python prototype prevents claiming a faithful port or comparison
 
 The numerical engine remains version **0.1.0**; the app is **0.2.0**. Its formulas/parameters were not silently changed for the UI. See `docs/lab.md` for the read-only, buffered tutor scope and public-launch limitations.
 
+## Stage 0.3
+
+- [x] Custom SVG board, semantic monochrome ink/text, square/Shift selection and explicit select-to-act bar.
+- [x] Presets/formula templates, XYZ/free-build atom editing, 3D placement and keyboard alternatives.
+- [x] Structured student energy diagrams, Pauli validation and solver-grounded diagram checks.
+- [x] Content undo/redo, bounded event log and side-effect-free replay.
+- [x] Explicit local saving, validated JSON import/export and unavailable-version refusal.
+- [x] SQLite public read-only links, separate hashed owner tokens, revision protection, owner deletion and real QR generation.
+- [x] Local notebook, frozen model/camera/region pins, captions/tags/search/reorder and explicit AI-draft acceptance.
+- [x] PNG/SVG/Markdown/ZIP/PDF-print/source exports and clipboard image/text/MD/link paths.
+- [x] GLB, OBJ, PLY, gated STL, cube and XYZ, with phase/provenance/units and independent reader checks.
+- [x] Write → select → model → check → pin → export/share/reopen flow tested without AI.
+
+App version **0.3.0**, numerical engine **0.1.0**, parameters unchanged. Read `docs/board.md` for size caps, static-image trust, self-contained versus server links, STL restrictions and external-app/device validation limits. No remote publishing or launch certification has been performed.
+
 ## Next stages — not implemented
 
-0.3 board/notebook/export; 0.4 Tier-2 registry/calculators/offline app; 0.5 ink; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
+0.4 Tier-2 registry/calculators/offline app; 0.5 ink recognition; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
 
-The solver contract exists now, but a multi-subject registry is not implemented. Accounts, instructor access, 3D formats, exam syllabus, board library and AI-provider decisions can wait until their stages. Preserve explicit intent, monochrome semantics and traceable numbers throughout.
+The solver contract and a narrow formula counter exist, but a broad multi-subject registry is not implemented. Accounts/instructor access, exam syllabus and full tutor/provider evaluation remain open. Preserve explicit intent, monochrome semantics and traceable numbers throughout.
