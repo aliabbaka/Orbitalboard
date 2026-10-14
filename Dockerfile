@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci --ignore-scripts
 COPY src ./src
+COPY web ./web
+COPY scripts/offline-manifest.mjs ./scripts/offline-manifest.mjs
 RUN npm run build && npm prune --omit=dev --ignore-scripts
 
 FROM python:3.13.16-slim-bookworm@sha256:a1165e272e578941b84abc79e4ab38a0305cd12803a5c4247979ac7655f4d641
@@ -18,6 +20,7 @@ COPY --from=build /app/node_modules/three ./node_modules/three
 COPY --from=build /app/node_modules/qrcode-generator ./node_modules/qrcode-generator
 COPY --from=build /app/node_modules/fflate ./node_modules/fflate
 COPY web ./web
+COPY --from=build /app/web/offline-manifest.json ./web/offline-manifest.json
 COPY backend ./backend
 COPY docs ./docs
 COPY scripts/solve-stdin.mjs ./scripts/solve-stdin.mjs

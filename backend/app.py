@@ -81,9 +81,27 @@ def create_app(config=None):
         request.csp_nonce = secrets.token_urlsafe(18)
         return (ROOT / 'web/board.html').read_text().replace('__CSP_NONCE__', request.csp_nonce)
 
+    @app.get('/tools')
+    def tools_page():
+        return (ROOT / 'web/tools.html').read_text()
+
+    @app.get('/sw.js')
+    @app.get('/offline-manifest.json')
+    def offline_assets():
+        if request.path == '/sw.js':
+            manifest = json.loads((ROOT / 'web/offline-manifest.json').read_text())
+            response = app.response_class('/* public asset build ' + manifest['version'] + ' */\n' + (ROOT / 'web/sw.js').read_text(), mimetype='application/javascript')
+        else:
+            response = send_from_directory(ROOT / 'web', request.path.lstrip('/'))
+        response.headers['Cache-Control'] = 'no-cache'
+        if request.path == '/sw.js':
+            response.headers['Service-Worker-Allowed'] = '/'
+        return response
+
     @app.get("/styles.css")
     @app.get("/favicon.svg")
     @app.get('/board.css')
+    @app.get('/tools.css')
     def assets():
         return send_from_directory(ROOT / "web", request.path.lstrip("/"))
 
@@ -149,7 +167,7 @@ def create_app(config=None):
 
     @app.get("/api/health")
     def health():
-        return jsonify(ok=True, stage="0.3", tutorAvailable=bool(os.environ.get("GROQ_API_KEY")),
+        return jsonify(ok=True, stage="0.4", tutorAvailable=bool(os.environ.get("GROQ_API_KEY")),
                        engineAvailable=bool(shutil.which("node")) and (ROOT / "dist/index.js").is_file())
 
     def recompute():

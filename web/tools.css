@@ -1,0 +1,39 @@
+.tools-main { max-width:1600px; }
+.tools-tabs { display:flex; gap:10px; margin:0 0 18px; flex-wrap:wrap; }
+.tools-tabs button { font-size:12px; }
+.tools-tabs button[aria-pressed=true] { background:var(--ink); color:var(--inverse); }
+.tools-layout { display:grid; grid-template-columns:240px minmax(280px,1fr) minmax(300px,1fr); gap:16px; align-items:start; }
+.solver-list-panel > input { width:calc(100% - 24px); margin:12px; font-size:11px; }
+#solver-list { max-height:760px; overflow:auto; padding:0 12px 12px; }
+#solver-list h3 { color:var(--muted); margin:15px 0 7px; font-size:11px; }
+#solver-list button { width:100%; text-align:left; margin:4px 0; font-size:11px; padding:10px; }
+#solver-list button[aria-pressed=true] { border-color:var(--ink); }
+.tool-content { padding:20px; }
+.tool-content label { display:block; font-size:11px; margin:12px 0 7px; }
+.tool-content input:not([type=checkbox]), .tool-content select, .tool-content textarea { width:100%; font-size:12px; }
+.tool-content input[type=number] { max-width:180px; }
+.quantity-input { display:grid; grid-template-columns:1fr 120px; gap:8px; }
+.optional-field { border-left:2px solid var(--line); padding-left:10px; }
+.optional-field > label { display:flex; align-items:center; gap:7px; }
+.tool-result-panel { min-height:550px; }
+#solver-result table { font-size:12px; }
+#solver-result th { min-width:130px; }
+#solver-result td { text-align:left; white-space:normal; overflow-wrap:anywhere; }
+#solver-steps { padding-left:20px; font-size:12px; line-height:1.8; }
+.tool-warning { padding:10px 12px; border:1px solid var(--line); border-radius:5px; font-size:11px; line-height:1.7; margin:10px 0; color:var(--muted); }
+#solver-sources a { display:block; font-size:10px; text-decoration:underline; margin:9px 0; }
+#solver-graph svg { width:100%; height:220px; }
+#solver-graph svg text { fill:var(--muted); font:10px system-ui,sans-serif; }
+#solver-graph .curve { fill:none; stroke:var(--ink); stroke-width:1.8; }
+#solver-graph .grid { stroke:var(--line); }
+.periodic-grid { display:grid; grid-template-columns:repeat(18,minmax(40px,1fr)); grid-template-rows:repeat(9,65px); gap:5px; overflow:auto; margin:20px 0; }
+.periodic-grid button { min-width:40px; padding:5px; font-size:16px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+.periodic-grid button small { font-size:9px; color:var(--muted); }
+.periodic-grid button[aria-pressed=true] { border-color:var(--ink); background:var(--raised); }
+.element-details { border-top:1px solid var(--line); padding-top:18px; }
+.element-details h3 { font-size:20px; font-weight:450; }
+.element-details p,.element-details a { font-size:12px; line-height:1.8; }
+body[data-tools-embedded=true] .app-header, body[data-tools-embedded=true] .intro { display:none; }
+body[data-tools-embedded=true] main { padding:12px; }
+@media(max-width:1100px) { .tools-layout { grid-template-columns:220px 1fr; } .tool-result-panel { grid-column:1/-1; } }
+@media(max-width:650px) { .tools-layout { grid-template-columns:1fr; } #solver-list { max-height:230px; } .tools-tabs { gap:5px; } .tools-tabs button { font-size:10px; } .periodic-grid { display:flex; flex-wrap:wrap; } .periodic-grid button { width:calc(20% - 5px); } }

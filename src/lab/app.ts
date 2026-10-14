@@ -10,6 +10,7 @@ import { MolecularViewer } from './viewer.js';
 import { installBoardBridge } from './board-bridge.js';
 import { makeSnapshot } from '../board/snapshot.js';
 import type { ModelSnapshot } from '../board/types.js';
+import { installOffline } from '../offline/client.js';
 
 type Scan = ReturnType<typeof scanAngle>;
 const el = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -56,6 +57,7 @@ let solveFrame = 0, scanTimer = 0, scanRequested = false, scanSequence = 0;
 let tutorAvailable = false, viewer: MolecularViewer | null = null;
 let lockedSnapshot = false, restoredView: ModelSnapshot['view'] | null = null;
 document.body.dataset.solveCount = '0';
+if (window.parent === window) installOffline();
 
 let theme: string;
 try { theme = localStorage.getItem('orbitalboard-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }
@@ -95,7 +97,7 @@ function actions(): void {
   button('homo').disabled = !fresh() || !result!.homoIndices.length;
   button('lumo').disabled = !fresh() || !result!.lumoIndices.length;
   button('scan').disabled = !fresh() || state.atoms.length < 3 || new Set(selectedIds()).size < 3;
-  button('copy-state').disabled = !fresh(); button('explain').disabled = !fresh() || !tutorAvailable;
+  button('copy-state').disabled = !fresh(); button('explain').disabled = !fresh() || !tutorAvailable || !navigator.onLine;
   const surfaceReady = fresh() && (!viewer || select('view-mode').value === 'molecule' || (field !== null && field.orbitalIndex === selectedOrbital));
   button('pin-lab').disabled = !surfaceReady; button('export-model').disabled = !fresh();
 }
@@ -414,6 +416,8 @@ button('explain').onclick = async () => {
 };
 
 resetSystem(state);
+window.addEventListener('offline', () => { actions(); el('tutor-status').textContent = 'Offline: AI explanations are unavailable; browser solvers and local exports still work.'; });
+window.addEventListener('online', actions);
 installBoardBridge({
   current: () => {
     if (!fresh()) return null;

@@ -66,6 +66,16 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(quota.post('/api/boards', json={"document": document()}).status_code, 201)
         self.assertEqual(quota.post('/api/boards', json={"document": document()}).status_code, 507)
 
+    def test_schema2_calculators_are_version_checked_and_recomputed_on_share(self):
+        data = document(); data['schemaVersion'] = 2; data['engines']['registry'] = '1.0.0'
+        calculation = {'solverId': 'chem.balance', 'solverVersion': '1.0.0', 'dataVersion': 'tier2-data-1.0.0', 'inputs': {'equation': 'H2 + O2 -> H2O'}}
+        data['objects'] = [{'id': 'result', 'type': 'calculation', 'calculation': calculation, 'display': 'steps', 'x': 20, 'y': 20, 'width': 400, 'height': 350}]
+        self.assertEqual(self.client.post('/api/boards', json={'document': data}).status_code, 201)
+        calculation['solverVersion'] = 'unavailable'
+        self.assertEqual(self.client.post('/api/boards', json={'document': data}).status_code, 400)
+        calculation['solverVersion'] = '1.0.0'; calculation['inputs']['equation'] = 'H2 -> CO2'
+        self.assertEqual(self.client.post('/api/boards', json={'document': data}).status_code, 400)
+
 
 if __name__ == '__main__':
     unittest.main()

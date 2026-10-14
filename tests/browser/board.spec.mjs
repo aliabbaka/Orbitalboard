@@ -23,7 +23,7 @@ test('typed selection requires an action; answer, undo, redo, replay and local J
   await page.locator('#save-local').click(); await expect(page.locator('#board-status')).toContainText('saved locally');
   await page.reload(); await page.locator('#restore-local').click(); await expect(page.locator('#board-canvas')).toContainText('8 valence electrons');
   await page.locator('#export-board').click(); const download = page.waitForEvent('download'); await page.locator('#board-json').click();
-  const file = await download; const document = JSON.parse(await readFile(await file.path(), 'utf8')); expect(document.schemaVersion).toBe(1); expect(document.engines.eht).toBe('0.1.0'); expect(document.events).toHaveLength(0);
+  const file = await download; const document = JSON.parse(await readFile(await file.path(), 'utf8')); expect(document.schemaVersion).toBe(2); expect(document.engines.eht).toBe('0.1.0'); expect(document.events).toHaveLength(0);
   expect(errors).toEqual([]);
 });
 

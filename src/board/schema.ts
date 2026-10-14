@@ -6,6 +6,8 @@ import { fillElectrons } from '../engine/occupation.js';
 import { requireVerifiedElement } from '../data/parameters.js';
 import { parseFormula } from './formula.js';
 import type { BoardDocument, BoardObject, ModelSnapshot, Pin } from './types.js';
+import { validateCalculation } from '../solvers/registry.js';
+import { REGISTRY_VERSION } from '../solvers/sources.js';
 
 export const MAX_BOARD_BYTES = 4 * 1024 * 1024;
 const record = (value: unknown): Record<string, unknown> => {
@@ -46,15 +48,22 @@ export function validateSnapshot(value: unknown): ModelSnapshot {
 }
 
 export function emptyBoard(): BoardDocument {
-  return { schemaVersion: 1, engines: { eht: SOLVER_VERSION, parameters: PARAMETER_VERSION, formula: '1.0.0' }, id: crypto.randomUUID(), title: 'Untitled board', viewBox: [0, 0, 1100, 700], objects: [], systems: {}, media: {}, pins: [], events: [], cursor: 0 };
+  return { schemaVersion: 2, engines: { eht: SOLVER_VERSION, parameters: PARAMETER_VERSION, formula: '1.0.0', registry: REGISTRY_VERSION }, id: crypto.randomUUID(), title: 'Untitled board', viewBox: [0, 0, 1100, 700], objects: [], systems: {}, media: {}, pins: [], events: [], cursor: 0 };
 }
 
 export function parseBoard(value: unknown): BoardDocument {
   if (new TextEncoder().encode(JSON.stringify(value)).length > MAX_BOARD_BYTES) throw new Error('Board exceeds the 4 MiB limit. Export some pins separately or start another board.');
+  // Explicit schema-1 migration adds only the calculator manifest. Existing EHT/formula versions and inputs are unchanged.
+  if (record(value).schemaVersion === 1) {
+    const legacy = structuredClone(record(value)), oldEngines = record(legacy.engines);
+    if (Object.hasOwn(oldEngines, 'registry')) throw new Error('Schema-1 data cannot supply a calculator manifest.');
+    if (Array.isArray(legacy.objects) && legacy.objects.some(o => record(o).type === 'calculation')) throw new Error('Calculator objects require schema 2, not a forged legacy document.');
+    legacy.schemaVersion = 2; legacy.engines = { ...oldEngines, registry: REGISTRY_VERSION }; value = legacy;
+  }
   const doc = record(value); keys(doc, ['schemaVersion', 'engines', 'id', 'title', 'viewBox', 'objects', 'systems', 'media', 'pins', 'events', 'cursor']);
-  if (doc.schemaVersion !== 1) throw new Error('Unsupported board schema. No migration exists for this version.');
-  const engines = record(doc.engines); keys(engines, ['eht', 'parameters', 'formula']);
-  if (engines.eht !== SOLVER_VERSION || engines.parameters !== PARAMETER_VERSION || engines.formula !== '1.0.0') throw new Error('Pinned board solvers are unavailable. No silent version upgrade is permitted.');
+  if (doc.schemaVersion !== 2) throw new Error('Unsupported board schema. Only the explicit schema-1 to schema-2 migration is available.');
+  const engines = record(doc.engines); keys(engines, ['eht', 'parameters', 'formula', 'registry']);
+  if (engines.eht !== SOLVER_VERSION || engines.parameters !== PARAMETER_VERSION || engines.formula !== '1.0.0' || engines.registry !== REGISTRY_VERSION) throw new Error('Pinned board solvers are unavailable. No silent version upgrade is permitted.');
   id(doc.id); text(doc.title, 160, 'Title');
   array(doc.viewBox, 4); if (doc.viewBox.length !== 4) throw new Error('Invalid board viewport.'); doc.viewBox.forEach((v, i) => number(v, i < 2 ? -10000 : 100, i < 2 ? 10000 : 25000));
   const systems = record(doc.systems); if (Object.keys(systems).length > 80) throw new Error('Too many saved systems.');
@@ -77,6 +86,7 @@ export function parseBoard(value: unknown): BoardDocument {
       if (o.points.length < 1 || !['ink', 'muted'].includes(String(o.token))) throw new Error('Invalid ink stroke.');
       number(o.strokeWidth, 1, 12); o.points.forEach(p => { array(p, 2); if (p.length !== 2) throw new Error('Ink point needs two coordinates.'); p.forEach(v => number(v, -10000, 10000)); });
     } else if (o.type === 'answer') { keys(o, [...base, 'formula']); text(o.formula, 80, 'Formula'); parseFormula(o.formula); }
+    else if (o.type === 'calculation') { keys(o, [...base, 'calculation', 'display']); validateCalculation(o.calculation); if (!['answer', 'steps', 'graph'].includes(String(o.display))) throw new Error('Invalid calculator presentation.'); }
     else if (['molecule', 'orbitals', 'ladder', 'check', 'scan'].includes(String(o.type))) {
       id(o.systemId); if (!Object.hasOwn(systems, o.systemId)) throw new Error('Object references a missing system.');
       const n = buildBasis((systems[o.systemId] as ModelSnapshot).state).length;

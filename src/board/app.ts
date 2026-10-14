@@ -9,6 +9,10 @@ import { resolved, boardSVG, selectionBounds } from './render.js';
 import { saveLocal, loadLocal } from './storage.js';
 import { blobDataURL, copyImage, download, markdownBundle, noteMarkdown, noteSVG, pinLink, pinSource, portableBoard, qrSVG, regionBoard, svgPNG } from './export.js';
 import type { BoardDocument, BoardObject, Level, ModelSnapshot, Pin } from './types.js';
+import { installOffline } from '../offline/client.js';
+import { classifyTyped } from '../solvers/classify.js';
+import { makeCalculation, runCalculation, validateCalculation } from '../solvers/registry.js';
+import type { Calculation, InputData } from '../solvers/types.js';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 const input = (id: string): HTMLInputElement => el<HTMLInputElement>(id);
@@ -18,11 +22,13 @@ let history = new BoardHistory(emptyBoard()), readOnly = false, sharedId: string
 const notebookOwnedIds = new Set<string>();
 let textPlacement: [number, number] = [80, 80], textEditing: string | null = null, ladderEditing: string | null = null;
 let labReady = false, labObject: string | null = null, queuedSnapshot: ModelSnapshot | null = null, currentLab: ModelSnapshot | null = null;
+let toolsReady = false, queuedTools: { solverId: string; inputs: InputData } | null = null;
 const status = (message: string) => { el('board-status').textContent = message; };
 const doc = () => history.document;
 const sharedURL = () => sharedId ? `${location.origin}/b/${sharedId}` : null;
 let theme = 'dark'; try { theme = localStorage.getItem('orbitalboard-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch { /* preferences are optional */ }
 document.documentElement.dataset.theme = theme;
+installOffline();
 
 function change(kind: string, before: BoardObject[], after: BoardObject[], pins: Pin[] | null = null): void {
   if (readOnly) { status('Read-only board. Remix it to make your own changes.'); return; }
@@ -71,6 +77,7 @@ function selectionChanged(): void {
   const object = objects[0]; const b = selectionBounds(objects); const [x, y] = canvas.screen(b.x, b.y + b.height + 6);
   bar.style.left = `${Math.max(8, Math.min(canvas.svg.clientWidth - 360, x))}px`; bar.style.top = `${Math.max(8, Math.min(canvas.svg.clientHeight - 100, y))}px`;
   let formula: string | null = null;
+  const typed = objects.length === 1 && object.type === 'text' ? classifyTyped(object.text) : null;
   if (objects.length === 1 && object.type === 'text') { try { parseFormula(object.text); formula = normalizeFormula(object.text); } catch { /* ordinary text/ink stays student work */ } }
   el('interpretation').textContent = formula ? `Read as ${formula} — correct? Edit the text before choosing if needed.` : object.type === 'ink' ? 'Ink stays ink. Recognition is not enabled; type it instead.' : `${objects.length} selected · ${object.type} · choose an action.`;
   const primary: Action[] = [], more: Action[] = [];
@@ -84,6 +91,33 @@ function selectionChanged(): void {
     add('Orbitals', () => formulaOrbitals(captured, object));
     add('Answer', () => { resultNext(object, { type: 'answer', formula: captured }, 'formula_answer', 250); });
     add('Edit', () => openText(object.x, object.y, object));
+    add('Molar mass', () => calculationNext(object, 'chem.molar-mass', { formula: captured }), true);
+    add('Calculator tools', () => openTools('chem.molar-mass', { formula: captured }), true);
+  } else if (object.type === 'text' && typed) {
+    el('interpretation').textContent = `Read as ${typed.replaceAll('-', ' ')} — edit to correct before choosing. No calculation yet.`;
+    if (typed === 'chemical-equation') {
+      add('Balance', () => calculationNext(object, 'chem.balance', { equation: object.text }));
+      add('Steps', () => calculationNext(object, 'chem.balance', { equation: object.text }, 'steps'));
+      add('Stoichiometry', () => openTools('chem.stoichiometry', { equation: object.text }));
+    } else if (typed === 'chemical-formula') {
+      add('Molar mass', () => calculationNext(object, 'chem.molar-mass', { formula: object.text }));
+      add('Steps', () => calculationNext(object, 'chem.molar-mass', { formula: object.text }, 'steps'));
+      add('Tools', () => openTools('chem.molar-mass', { formula: object.text }));
+    } else if (typed === 'math-equation') {
+      add('Answer', () => calculationNext(object, 'math.solve', { equation: object.text }));
+      add('Steps', () => calculationNext(object, 'math.solve', { equation: object.text }, 'steps'));
+      add('Tools', () => openTools('math.solve', { equation: object.text }));
+    } else {
+      add('Evaluate', () => openTools('math.calculate', { expression: object.text, x: 0 }));
+      add('Differentiate', () => calculationNext(object, 'math.differentiate', { expression: object.text }));
+      add('Integrate', () => calculationNext(object, 'math.integrate', { expression: object.text }));
+      add('Graph', () => openTools('math.graph', { expression: object.text, min: -5, max: 5 }));
+    }
+    add('Edit', () => openText(object.x, object.y, object), true);
+  } else if (object.type === 'calculation') {
+    add('Reopen tools', () => openTools(object.calculation.solverId, object.calculation.inputs));
+    add('Steps', () => { change('calculator_presentation_changed', [object], [{ ...object, display: 'steps' }]); });
+    add('Answer', () => { change('calculator_presentation_changed', [object], [{ ...object, display: 'answer' }]); });
   } else if ('systemId' in object) {
     add('3D model', () => openLab(doc().systems[object.systemId], object.type === 'molecule' ? object.id : null));
     add('Orbitals', () => { resultNext(object, { type: 'orbitals', systemId: object.systemId }, 'orbitals_requested', 400); });
@@ -111,13 +145,36 @@ function selectionChanged(): void {
   add('Delete', () => { change('objects_deleted', canvas.objects(), []); canvas.selected.clear(); render(); }, true);
   currentActions = primary.slice(0, 5); if (primary.length > 5) more.unshift(...primary.slice(5));
   el('primary-actions').replaceChildren(...currentActions.map((action, index) => {
-    const button = element('button', `${action.label} ${index + 1}`); button.disabled = readOnly && action.label !== '3D model' && action.label !== 'Copy image';
+    const button = element('button', `${action.label} ${index + 1}`); button.disabled = readOnly && !['3D model', 'Copy image', 'Reopen tools'].includes(action.label);
     try { if (localStorage.getItem(`orbitalboard-action-${formula ? 'formula' : object.type}`) === action.label) { button.classList.add('last-used'); button.title = 'Last used action for this content type'; } } catch { /* optional preference */ }
     button.onclick = () => { try { localStorage.setItem(`orbitalboard-action-${formula ? 'formula' : object.type}`, action.label); } catch { /* optional */ } invoke(action); }; return button;
   }));
   el('more-actions').querySelector('div')!.replaceChildren(...more.map(action => { const button = element('button', action.label); button.disabled = readOnly && action.label !== 'Copy image' && action.label !== 'Export model'; button.onclick = () => invoke(action); return button; }));
 }
 type Payload = Omit<Extract<BoardObject, { type: 'answer' }>, 'id' | 'x' | 'y' | 'width' | 'height'> | { type: 'orbitals' | 'molecule'; systemId: string } | { type: 'ladder' | 'check'; systemId: string; levels: Level[] } | { type: 'scan'; systemId: string; centerId: string; fixedId: string; movingId: string; angles: number[] };
+function calculationNext(source: BoardObject, solverId: string, inputs: InputData, display: 'answer' | 'steps' | 'graph' = 'answer'): void {
+  if (readOnly) throw new Error('Remix before computing new results.'); const calculation = makeCalculation(solverId, inputs); runCalculation(calculation);
+  const object: BoardObject = { id: crypto.randomUUID(), type: 'calculation', calculation, display, x: source.x + source.width + 40, y: source.y, width: 450, height: 380 };
+  change('calculator_requested', [], [object]); canvas.select(object.id);
+}
+function openTools(solverId = 'chem.balance', inputs: InputData = {}): void {
+  queuedTools = { solverId, inputs }; el<HTMLDialogElement>('tools-dialog').showModal(); const frame = el<HTMLIFrameElement>('tools-frame');
+  if (!frame.src.endsWith('/tools?embedded=1')) { toolsReady = false; frame.src = '/tools?embedded=1'; }
+  if (toolsReady) frame.contentWindow?.postMessage({ type: 'board-load-tools', ...queuedTools }, location.origin);
+}
+btn('calculator-tools').onclick = () => openTools(); btn('close-tools').onclick = () => el<HTMLDialogElement>('tools-dialog').close();
+window.addEventListener('message', event => {
+  if (event.origin !== location.origin || event.source !== el<HTMLIFrameElement>('tools-frame').contentWindow) return;
+  try {
+    if (event.data?.type === 'tools-ready') { toolsReady = true; if (queuedTools) el<HTMLIFrameElement>('tools-frame').contentWindow?.postMessage({ type: 'board-load-tools', ...queuedTools }, location.origin); }
+    if (event.data?.type === 'tools-result') {
+      if (readOnly) throw new Error('Remix before adding results.'); const calculation: Calculation = validateCalculation(event.data.calculation); runCalculation(calculation);
+      const source = canvas.objects()[0]; const display = ['answer', 'steps', 'graph'].includes(event.data.display) ? event.data.display as 'answer' | 'steps' | 'graph' : 'answer';
+      const object: BoardObject = { id: crypto.randomUUID(), type: 'calculation', calculation, display, x: source ? source.x + source.width + 40 : doc().viewBox[0] + 80, y: source?.y ?? doc().viewBox[1] + 80, width: 450, height: 380 };
+      change('calculator_result_added', [], [object]); canvas.select(object.id); el<HTMLDialogElement>('tools-dialog').close();
+    }
+  } catch (error) { status((error as Error).message); }
+});
 function resultNext(source: BoardObject, payload: Payload, kind: string, height = 250): BoardObject {
   if (readOnly) throw new Error('Remix the board before creating new results.');
   if ('systemId' in payload && ['orbitals', 'check', 'scan'].includes(payload.type)) resolved(doc().systems[payload.systemId]);
@@ -211,6 +268,7 @@ function renderPins(): void {
     action('↑', () => reorder(pin.id, -1), true); action('↓', () => reorder(pin.id, 1), true);
     action('Remove', async () => { change('pin_removed', [], [], doc().pins.filter(p => p.id !== pin.id)); await persistNotebook(); }, true);
     action('Draft AI caption', () => draftCaption(pin, card), true);
+    const ai = [...buttons.querySelectorAll('button')].find(b => b.textContent === 'Draft AI caption'); if (ai) ai.disabled = readOnly || !navigator.onLine || !pin.systemId;
     card.append(image, title, caption, tags, element('p', `${pin.captionSource === 'ai-unverified' ? 'AI caption: accepted, still unverified. ' : ''}Saved image is an attachment. ${pinSource(pin, doc())}`, 'fine'), buttons); return card;
   }));
 }
@@ -253,7 +311,9 @@ btn('restore-notebook').onclick = async () => { try { if (readOnly) throw new Er
 
 function ownerToken(): string | null { try { return sharedId ? localStorage.getItem(`orbitalboard-owner-${sharedId}`) : null; } catch { return null; } }
 btn('share-board').onclick = () => { el<HTMLDialogElement>('share-dialog').showModal(); showLink(); };
-function showLink(): void { input('shared-link').value = sharedURL() ?? ''; btn('delete-shared').disabled = !ownerToken(); btn('save-shared').disabled = readOnly; if (sharedURL()) el('share-qr').innerHTML = qrSVG(sharedURL()!); }
+function showLink(): void { input('shared-link').value = sharedURL() ?? ''; btn('delete-shared').disabled = !ownerToken() || !navigator.onLine; btn('save-shared').disabled = readOnly || !navigator.onLine; if (sharedURL()) el('share-qr').innerHTML = qrSVG(sharedURL()!); }
+window.addEventListener('offline', () => { showLink(); renderPins(); status('Offline: local calculations/saving/exports work; AI and server sharing are unavailable. No writes are queued.'); });
+window.addEventListener('online', () => { showLink(); renderPins(); });
 btn('save-shared').onclick = async () => {
   try {
     if (readOnly) throw new Error('Remix or choose Owner edit first.');
@@ -315,4 +375,7 @@ if (path) {
 }
 else if (location.hash.startsWith('#fragment=')) {
   void decodeFragment(location.hash.slice(10)).then(value => { readOnly = true; useDocument(parseBoard(value)); canvas.fit(); status('Read-only self-contained note region. Replays pinned sources locally; no upload. Remix to edit.'); }).catch(error => status(`Cannot reopen region: ${(error as Error).message}`));
+}
+else if (new URLSearchParams(location.search).get('calculation-handoff') === '1') {
+  void loadLocal('calculation-handoff').then(saved => { if (saved) { useDocument(saved); canvas.fit(); status('Versioned calculator result transferred locally. No upload.'); } }).catch(error => status((error as Error).message));
 }

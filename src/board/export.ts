@@ -4,6 +4,7 @@ import { escapeXML, resolved } from './render.js';
 import { encodeFragment, snapshotLink } from './snapshot.js';
 import { emptyBoard } from './schema.js';
 import { systemFormula } from './formula.js';
+import { runCalculation } from '../solvers/registry.js';
 import type { BoardDocument, Pin } from './types.js';
 
 export function download(data: Blob | string, filename: string, type = 'text/plain'): void {
@@ -54,6 +55,11 @@ export function regionBoard(pin: Pin, doc: BoardDocument): BoardDocument {
   return copy;
 }
 export function pinSource(pin: Pin, doc: BoardDocument): string {
+  const calculation = pin.region?.find(o => o.type === 'calculation');
+  if (calculation?.type === 'calculation') {
+    try { const result = runCalculation(calculation.calculation); return `Computed ${result.solverId} ${result.solverVersion} · ${result.dataVersion} · frozen inputs · ${pin.date.slice(0, 10)}`; }
+    catch { return 'Unavailable calculator version/source; no verified numerical claims.'; }
+  }
   if (!pin.systemId) return `Student board work · ${pin.date.slice(0, 10)} · board schema ${doc.schemaVersion}`;
   const snapshot = doc.systems[pin.systemId]; let result;
   try { result = resolved(snapshot); } catch { return `Source unavailable · EHT ${snapshot.solverVersion} · ${snapshot.parameterVersion} · no verified numerical claims`; }

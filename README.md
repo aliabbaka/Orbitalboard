@@ -1,6 +1,6 @@
 # OrbitalBoard
 
-A chemistry and math learning tool where **solvers compute and AI interprets**. **Stage 0.3: Board and Notebook** adds a selectable monochrome whiteboard, structured system builder, history, local notes, read-only sharing, source-linked exports and model downloads, built on the validated engine and molecular lab.
+A chemistry and math learning tool where **solvers compute and AI interprets**. **Stage 0.4** adds a test-gated chemistry/math solver registry, units and precision checks, cited periodic references and offline browser calculators, alongside the whiteboard/notebook and flagship orbital lab.
 
 The supplied October 9, 2026 plan (v2.2) is the product direction. Its `eht_engine.py` prototype was unavailable, so this is a new implementation, **not a verified port** of the reported prototype.
 
@@ -15,7 +15,11 @@ python3 -m venv .venv
 npm start
 ```
 
-Open **http://127.0.0.1:5001/board** for the whiteboard, or **http://127.0.0.1:5001/** for the standalone lab.
+Open **http://127.0.0.1:5001/tools** for verified calculators, **/board** for the whiteboard, or **/** for the orbital lab.
+
+**Tools:** select a tested method, check quantity units/assumptions, then Compute. Results show source-backed values, raw JSON, steps and limitations. Add a result to the board or select a typed equation/formula directly on the board. Calculus is deliberately bounded (elementary derivatives, polynomial-only integrals), not a universal CAS. Unsupported/ambiguous/ionic cases are refused rather than guessed.
+
+**Offline:** after an online visit, wait for **Offline assets ready**. Calculators, periodic data, the board and orbital worker can then reload without connection. AI and server sharing require a connection. API/user data and failed writes are never put into the asset cache or queued. Save local work explicitly.
 
 **Board:** choose Text/formula, click the board, type `NH3`, then select it and choose **3D model**, **Orbitals** or **Answer**. Writing alone does not solve. Pen strokes remain ink; handwriting recognition is later. System builder accepts presets, XYZ and freely editable atoms. A formula without a known template is not assigned a guessed geometry.
 
@@ -43,6 +47,8 @@ npm run test:browser
 npm run demo
 npm run validation-report
 npm run benchmark
+ .venv/bin/python -m pip install -r scripts/requirements-tier2-oracle.txt
+ .venv/bin/python scripts/check_tier2_oracle.py
 ```
 
 `npm run build` emits native JavaScript ES modules and TypeScript declarations into `dist/`. No framework or bundler is required. Nothing is solved simply by importing `dist/index.js`.
@@ -120,6 +126,8 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 - Local notebook with frozen snapshots, editable notes/tags, search/reorder and explicit AI-caption acceptance (always unverified).
 - Validated board sharing, separate hashed owner tokens, optimistic revision checks and owner-only deletion.
 - Source-linked image/vector/Markdown/PDF/JSON exports and six 3D/chemistry download formats with reader/manifold checks.
+- 21 versioned Tier 2 calculators, checked chemistry/math grammar, explicit dimensions and display precision.
+- 118 cited periodic reference elements, standard-weight gates, neutral configuration cross-checks and content-hashed offline asset caching.
 
 **Enabled:** H, He, C, N, O, F, with documented model limits. **Sourced but disabled:** Li, Be, B, Ne pending chemical reference checks. Transition metals and d orbitals are unsupported. The 30-atom safety cap is not a 16 ms performance guarantee; large systems explicitly warn and should run in the worker.
 
@@ -128,9 +136,10 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 - [Methods, definitions and limitations](docs/methods.md)
 - [Using the lab and its architecture](docs/lab.md)
 - [Board, notes, sharing and export contract](docs/board.md)
+- [Tier 2 solver scope, data and offline contract](docs/solvers.md)
 - [Measured validation](docs/validation.md)
 - [CircuitLab code audit](docs/circuitlab-audit.md)
 - [Roadmap and defect status](docs/roadmap.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-The next planned milestone is **Stage 0.4: Tier 2 solvers and offline app support**. Handwriting recognition, broad math/chemistry solving, the full tool-calling tutor, curriculum/mastery, accounts and public-launch hardening remain later stages.
+The next planned milestone is **Stage 0.5: Ink recognition on selection**. Full tool-calling tutoring, broader unsupported chemistry/calculus, curriculum/mastery, accounts and public-launch hardening remain later stages.

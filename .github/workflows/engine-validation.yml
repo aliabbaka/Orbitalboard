@@ -25,12 +25,14 @@ jobs:
           cache-dependency-path: |
             scripts/requirements-oracle.txt
             backend/requirements.txt
+            scripts/requirements-tier2-oracle.txt
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm test
       - run: python -m venv .venv
-      - run: .venv/bin/python -m pip install -r scripts/requirements-oracle.txt -r backend/requirements.txt
+      - run: .venv/bin/python -m pip install -r scripts/requirements-oracle.txt -r backend/requirements.txt -r scripts/requirements-tier2-oracle.txt
       - run: .venv/bin/python scripts/generate_oracle.py --check
+      - run: .venv/bin/python scripts/check_tier2_oracle.py
       - run: npm run test:backend
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser

@@ -1,4 +1,5 @@
 import type { SystemState } from '../engine/types.js';
+import type { Calculation } from '../solvers/types.js';
 
 export interface ViewState {
   orbital: number;
@@ -21,6 +22,7 @@ export type BoardObject = Placement & (
   | { type: 'ink'; points: [number, number][]; token: 'ink' | 'muted'; strokeWidth: number }
   | { type: 'molecule' | 'orbitals'; systemId: string }
   | { type: 'answer'; formula: string }
+  | { type: 'calculation'; calculation: Calculation; display: 'answer' | 'steps' | 'graph' }
   | { type: 'ladder' | 'check'; systemId: string; levels: Level[] }
   | { type: 'scan'; systemId: string; centerId: string; fixedId: string; movingId: string; angles: number[] }
 );
@@ -47,8 +49,8 @@ export interface BoardEvent {
   pinsAfter: Pin[] | null;
 }
 export interface BoardDocument {
-  schemaVersion: 1;
-  engines: { eht: string; parameters: string; formula: string };
+  schemaVersion: 2;
+  engines: { eht: string; parameters: string; formula: string; registry: string };
   id: string;
   title: string;
   viewBox: [number, number, number, number];

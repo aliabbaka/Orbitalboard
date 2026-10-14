@@ -1,6 +1,6 @@
 # Roadmap / implementation status
 
-Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository now includes **Stages 0.1, 0.2 and 0.3**.
+Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository now includes **Stages 0.1 through 0.4**.
 
 ## Stage 0.1
 
@@ -60,6 +60,22 @@ App version **0.3.0**, numerical engine **0.1.0**, parameters unchanged. Read `d
 
 ## Next stages — not implemented
 
-0.4 Tier-2 registry/calculators/offline app; 0.5 ink recognition; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
+## Stage 0.4
+
+- [x] Versioned registry, trust/provenance labels and known-answer gate for 21 enabled chemistry/math/unit calculators.
+- [x] Neutral exact balancing, molar mass, limiting reagent/yield; gases; concentration/dilution/colligative changes; scoped acid/base, buffer/titration and ICE equilibrium.
+- [x] Source-checked H–Kr configurations, cited 118-element periodic reference, standard-weight/missing-data gates.
+- [x] Bounded AST algebra, elementary differentiation, polynomial integration and explicit graph/domain limits.
+- [x] Unit dimensions/conversions, raw-value preservation and stated display precision conventions.
+- [x] Workbench and explicit typed board dispatch with source-frozen calculator objects.
+- [x] Schema-1 to schema-2 migration retaining old engine/source versions, with no silent numerical upgrade.
+- [x] Content-hashed public asset caching; offline workbench/board/orbital reloads; no API/private-data or queued-write cache.
+- [x] Golden/property/browser tests and independent SymPy numerical checks.
+
+App **0.4.0**, EHT **0.1.0** unchanged. This is scoped, verified breadth, not all-purpose chemistry or a universal CAS; unsupported cases remain disabled. See `docs/solvers.md` for exact coverage and offline/privacy boundaries.
+
+## Next stages — not implemented
+
+0.5 ink recognition; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
 
 The solver contract and a narrow formula counter exist, but a broad multi-subject registry is not implemented. Accounts/instructor access, exam syllabus and full tutor/provider evaluation remain open. Preserve explicit intent, monochrome semantics and traceable numbers throughout.

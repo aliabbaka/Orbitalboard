@@ -8,3 +8,4 @@ playwright-report/
 test-results/
 .env
 var/
+web/offline-manifest.json

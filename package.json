@@ -1,12 +1,12 @@
 {
   "name": "orbitalboard",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "A traceable, deterministic chemistry and math learning engine",
   "engines": { "node": ">=22" },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/offline-manifest.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "demo": "npm run build && node scripts/demo.mjs",

@@ -3,9 +3,13 @@ import { scanAngle } from '../engine/scan.js';
 import { formulaElectrons, systemFormula } from './formula.js';
 import type { Derived } from '../engine/types.js';
 import type { BoardDocument, BoardObject, Level, ModelSnapshot } from './types.js';
+import { getSolver, runCalculation } from '../solvers/registry.js';
+import type { Calculation, SolverResult } from '../solvers/types.js';
 
 export const escapeXML = (value: string): string => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 const cache = new Map<string, Derived>();
+const calculationCache = new Map<string, SolverResult>();
+export function resolvedCalculation(calculation: Calculation): SolverResult { const key = JSON.stringify(calculation); if (!calculationCache.has(key)) { if (calculationCache.size > 80) calculationCache.clear(); calculationCache.set(key, runCalculation(calculation)); } return calculationCache.get(key)!; }
 export function resolved(snapshot: ModelSnapshot): Derived {
   const key = JSON.stringify([snapshot.solverVersion, snapshot.parameterVersion, snapshot.state]);
   if (!cache.has(key)) { if (cache.size > 80) cache.clear(); cache.set(key, solve(snapshot.state)); }
@@ -35,6 +39,17 @@ function rawObjectSVG(object: BoardObject, doc: BoardDocument, theme: 'dark' | '
   else if (object.type === 'answer') {
     const answer = formulaElectrons(object.formula); label = 'Computed · formula 1.0.0';
     body = lines([`${object.formula}: ${answer.electrons} valence electrons (neutral)`, ...answer.contributions.map(a => `${a.element}: ${a.count} × ${a.perAtom} = ${a.count * a.perAtom}`), 'Source: verified atomic table / YAeHMOP', 'This does not infer geometry or bonding.']);
+  } else if (object.type === 'calculation') {
+    const result = resolvedCalculation(object.calculation), solver = getSolver(result.solverId); label = `Computed · ${result.solverId} ${result.solverVersion}`;
+    const values = [solver.title, ...result.outputs.slice(0, 7).map(o => `${o.label}: ${o.display} ${['text', 'symbolic', '1', 'integer'].includes(o.unit) ? '' : o.unit}`)];
+    body = lines((object.display === 'steps' ? [...values.slice(0, 4), 'Working:', ...result.steps] : values).map(s => s.length > 85 ? `${s.slice(0, 82)}…` : s).slice(0, 11), 52, 21);
+    if (object.display === 'graph' && result.graph) {
+      const points = result.graph.points.filter(p => p.y !== null), xs = points.map(p => p.x), ys = points.map(p => p.y!); const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      let drawing = '', open = false;
+      for (const p of result.graph.points) { if (p.y === null) { open = false; continue; } drawing += `${open ? 'L' : 'M'}${20 + (p.x - minX) / Math.max(1e-12, maxX - minX) * (object.width - 40)},${90 + (maxY - p.y) / Math.max(1e-12, maxY - minY) * 130} `; open = true; }
+      body = lines([solver.title]) + `<path d="${drawing}" fill="none" stroke="${ink}" stroke-width="2"/>` + lines([`${result.graph.xLabel}: ${minX.toPrecision(4)} → ${maxX.toPrecision(4)}`, `${result.graph.yLabel}: ${minY.toPrecision(4)} → ${maxY.toPrecision(4)}`], 245, 20);
+    }
+    body += lines(['Source inputs / versions frozen; reopen Tools for full steps.', ...(result.warnings.length ? [result.warnings[0].slice(0, 75)] : [])], object.height - 38, 19);
   } else if (object.type === 'molecule') {
     const state = doc.systems[object.systemId].state; label = 'Input geometry · not solved';
     body = lines([systemFormula(state), `${state.atoms.length} atoms · charge ${state.charge ?? 0}`, 'Select → 3D model / Orbitals / Answer', 'Coordinates are editable in the lab.']);
