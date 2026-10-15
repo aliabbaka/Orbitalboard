@@ -13,6 +13,8 @@ import { installOffline } from '../offline/client.js';
 import { classifyTyped } from '../solvers/classify.js';
 import { makeCalculation, runCalculation, validateCalculation } from '../solvers/registry.js';
 import type { Calculation, InputData } from '../solvers/types.js';
+import { installRecognition } from '../recognition/controller.js';
+import { confirmedLevels } from '../recognition/schema.js';
 
 const el = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 const input = (id: string): HTMLInputElement => el<HTMLInputElement>(id);
@@ -36,6 +38,21 @@ function change(kind: string, before: BoardObject[], after: BoardObject[], pins:
   catch (error) { status((error as Error).message); render(); }
 }
 const canvas = new BoardCanvas(el('board-canvas') as unknown as SVGSVGElement, doc, () => !readOnly, change, selectionChanged, (x, y) => openText(x, y));
+const recognition = installRecognition({
+  selection: () => ({ documentId: doc().id, objects: canvas.objects(), systems: doc().systems, readOnly }), status,
+  accept: (reading, systemId, originals) => {
+    if (readOnly) throw new Error('Remix before adding input.');
+    const b = selectionBounds(originals); const placement = { id: crypto.randomUUID(), x: b.x + b.width + 25, y: b.y + 16, width: 370, height: reading.kind === 'energy-diagram' ? 430 : 160 };
+    let object: BoardObject;
+    if (reading.kind === 'energy-diagram' && systemId) {
+      if (!Object.hasOwn(doc().systems, systemId)) throw new Error('Reference system is no longer available.');
+      object = { ...placement, type: 'ladder', systemId, levels: confirmedLevels(reading) };
+    } else object = { ...placement, type: 'text', text: reading.text };
+    const candidate = structuredClone(doc()); candidate.objects.push(object); parseBoard(candidate);
+    change('recognition_confirmed_as_input', [], [object]); canvas.select(object.id); setTool('select');
+    status('Confirmed interpretation added as student input. Original ink retained. No solver ran; choose an action to compute/check.');
+  },
+});
 function setTheme(value: string): void { theme = value === 'light' ? 'light' : 'dark'; document.documentElement.dataset.theme = theme; btn('board-theme').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode'; try { localStorage.setItem('orbitalboard-theme', theme); } catch { /* optional */ } canvas.render(); renderPins(); }
 btn('board-theme').onclick = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 window.addEventListener('storage', event => { if (event.key === 'orbitalboard-theme' && event.newValue) setTheme(event.newValue); });
@@ -73,17 +90,19 @@ type Action = { label: string; run: () => void | Promise<void> };
 let currentActions: Action[] = [];
 function invoke(action: Action): void { try { const result = action.run(); if (result) void result.catch(error => status((error as Error).message)); } catch (error) { status((error as Error).message); } }
 function selectionChanged(): void {
+  recognition.selectionChanged();
   const objects = canvas.objects(), bar = el('action-bar'); bar.hidden = !objects.length; if (!objects.length) return;
   const object = objects[0]; const b = selectionBounds(objects); const [x, y] = canvas.screen(b.x, b.y + b.height + 6);
   bar.style.left = `${Math.max(8, Math.min(canvas.svg.clientWidth - 360, x))}px`; bar.style.top = `${Math.max(8, Math.min(canvas.svg.clientHeight - 100, y))}px`;
   let formula: string | null = null;
   const typed = objects.length === 1 && object.type === 'text' ? classifyTyped(object.text) : null;
   if (objects.length === 1 && object.type === 'text') { try { parseFormula(object.text); formula = normalizeFormula(object.text); } catch { /* ordinary text/ink stays student work */ } }
-  el('interpretation').textContent = formula ? `Read as ${formula} — correct? Edit the text before choosing if needed.` : object.type === 'ink' ? 'Ink stays ink. Recognition is not enabled; type it instead.' : `${objects.length} selected · ${object.type} · choose an action.`;
+  el('interpretation').textContent = formula ? `Read as ${formula} — correct? Edit the text before choosing if needed.` : object.type === 'ink' ? 'Ink stays ink until Read selection. Review any proposal before choosing a solver.' : `${objects.length} selected · ${object.type} · choose an action.`;
   const primary: Action[] = [], more: Action[] = [];
   const add = (label: string, run: Action['run'], extra = false) => (extra ? more : primary).push({ label, run });
   if (objects.length > 1) {
     el('interpretation').textContent = 'Mixed selection · pin/copy the region, or select one input to compute it.';
+    if (objects.every(o => o.type === 'ink' || o.type === 'text')) add('Read selection', () => recognition.open());
     add('Copy image', async () => copyImage(await svgPNG(boardSVG(doc(), canvas.objects(), theme === 'dark' ? 'dark' : 'light'))));
   } else if (formula) {
     const captured = formula;
@@ -138,8 +157,9 @@ function selectionChanged(): void {
     add('Export model', () => openLab(doc().systems[object.systemId], null), true);
   } else {
     if (object.type === 'text') add('Edit text', () => openText(object.x, object.y, object));
-    else add('Type instead', () => openText(object.x, object.y));
+    else { add('Read selection', () => recognition.open()); add('Type instead', () => openText(object.x, object.y)); }
   }
+  if (objects.length === 1 && object.type === 'text') add('Read selection', () => recognition.open(), true);
   add('Pin', () => pinSelection());
   add('Copy image', async () => copyImage(await svgPNG(boardSVG(doc(), canvas.objects(), theme === 'dark' ? 'dark' : 'light'))), true);
   add('Delete', () => { change('objects_deleted', canvas.objects(), []); canvas.selected.clear(); render(); }, true);

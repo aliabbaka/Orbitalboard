@@ -1,6 +1,6 @@
 {
   "name": "orbitalboard",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "A traceable, deterministic chemistry and math learning engine",
@@ -14,7 +14,8 @@
     "validation-report": "npm run build && node scripts/validation-report.mjs",
     "start": "npm run build && node scripts/start.mjs",
     "test:browser": "npm run build && playwright test",
-    "test:backend": ".venv/bin/python -m unittest discover -s backend/tests -v"
+    "test:backend": ".venv/bin/python -m unittest discover -s backend/tests -v",
+    "benchmark:recognition": "npm run build && node scripts/recognition-benchmark.mjs"
   },
   "dependencies": { "three": "0.186.1", "qrcode-generator": "2.0.4", "fflate": "0.8.3" },
   "devDependencies": {

@@ -14,6 +14,7 @@ from flask import Flask, abort, jsonify, request, send_from_directory
 
 from backend.tutor import TutorError, build_context, fetch_explanation, verify_explanation
 from backend.boards import BoardError, BoardStore
+from backend.recognition import RecognitionError, RecognitionService, availability as recognition_availability
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,12 +28,15 @@ def create_app(config=None):
     calls = OrderedDict()
     lock = threading.Lock()
     boards = BoardStore(app.config['BOARD_DB'], ROOT, app.config['BOARD_QUOTA'])
+    recognition = RecognitionService(ROOT)
 
     @app.before_request
     def guard():
         if request.path.startswith('/api/boards'):
             request.max_content_length = 4 * 1024 * 1024 + 65536
-        if request.path.startswith("/api/tutor/") or (request.path.startswith('/api/boards') and request.method != 'GET'):
+        if request.path.startswith('/api/recognition/'):
+            request.max_content_length = 1024 * 1024
+        if request.path.startswith("/api/tutor/") or (request.path.startswith('/api/boards') and request.method != 'GET') or (request.path.startswith('/api/recognition/') and request.method != 'GET'):
             # Same-origin browser calls only; no broad CORS or proxy-header trust.
             origin = request.headers.get("Origin")
             if origin and origin != request.host_url.rstrip("/"):
@@ -120,6 +124,19 @@ def create_app(config=None):
         except BoardError as error:
             return jsonify(error=str(error)), error.status
 
+    @app.get('/api/recognition/status')
+    def recognition_status():
+        return jsonify(recognition_availability())
+
+    @app.post('/api/recognition/read')
+    def recognize_selection():
+        try:
+            if not request.is_json:
+                raise RecognitionError('Send a consented selected PNG crop as JSON.')
+            return jsonify(recognition.read(request.get_json(silent=True)))
+        except RecognitionError as error:
+            return jsonify(error=str(error)), error.status
+
     def document_body():
         body = request.get_json(silent=True) if request.is_json else None
         if not isinstance(body, dict) or set(body) != {'document'}:
@@ -167,7 +184,7 @@ def create_app(config=None):
 
     @app.get("/api/health")
     def health():
-        return jsonify(ok=True, stage="0.4", tutorAvailable=bool(os.environ.get("GROQ_API_KEY")),
+        return jsonify(ok=True, stage="0.5", tutorAvailable=bool(os.environ.get("GROQ_API_KEY")), recognitionAvailable=recognition_availability()['available'],
                        engineAvailable=bool(shutil.which("node")) and (ROOT / "dist/index.js").is_file())
 
     def recompute():

@@ -1,5 +1,5 @@
 /* Public app assets only. Never store board API responses, credentials, questions or failed writes. */
-const PREFIX = 'orbitalboard-0.4-';
+const PREFIX = 'orbitalboard-0.5-';
 let currentCache;
 async function cacheName() {
   if (!currentCache) currentCache = (await caches.keys()).filter(name => name.startsWith(PREFIX)).at(-1);
@@ -16,7 +16,7 @@ self.addEventListener('install', event => {
   })());
 });
 self.addEventListener('activate', event => {
-  event.waitUntil((async () => { const name = await cacheName(); for (const old of await caches.keys()) if (old.startsWith(PREFIX) && old !== name) await caches.delete(old); await self.clients.claim(); })());
+  event.waitUntil((async () => { const name = await cacheName(); for (const old of await caches.keys()) if ((old.startsWith(PREFIX) || old.startsWith('orbitalboard-0.4-')) && old !== name) await caches.delete(old); await self.clients.claim(); })());
 });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);

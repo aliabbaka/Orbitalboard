@@ -25,6 +25,7 @@ COPY backend ./backend
 COPY docs ./docs
 COPY scripts/solve-stdin.mjs ./scripts/solve-stdin.mjs
 COPY scripts/validate-board.mjs ./scripts/validate-board.mjs
+COPY scripts/validate-recognition.mjs ./scripts/validate-recognition.mjs
 COPY THIRD_PARTY_NOTICES.md ./
 COPY licenses ./licenses
 RUN useradd --create-home --uid 10001 orbitalboard && mkdir -p /app/var && chown orbitalboard:orbitalboard /app/var
