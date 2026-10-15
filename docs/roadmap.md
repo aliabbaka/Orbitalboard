@@ -58,8 +58,6 @@ The numerical engine remains version **0.1.0**; the app is **0.2.0**. Its formul
 
 App version **0.3.0**, numerical engine **0.1.0**, parameters unchanged. Read `docs/board.md` for size caps, static-image trust, self-contained versus server links, STL restrictions and external-app/device validation limits. No remote publishing or launch certification has been performed.
 
-## Next stages — not implemented
-
 ## Stage 0.4
 
 - [x] Versioned registry, trust/provenance labels and known-answer gate for 21 enabled chemistry/math/unit calculators.
@@ -78,4 +76,4 @@ App **0.4.0**, EHT **0.1.0** unchanged. This is scoped, verified breadth, not al
 
 0.5 ink recognition; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
 
-The solver contract and a narrow formula counter exist, but a broad multi-subject registry is not implemented. Accounts/instructor access, exam syllabus and full tutor/provider evaluation remain open. Preserve explicit intent, monochrome semantics and traceable numbers throughout.
+The registry now covers the declared Stage 0.4 scopes; unsupported Tier 3 and general CAS cases remain disabled. Accounts/instructor access, exam syllabus and full tutor/provider evaluation remain open. Preserve explicit intent, monochrome semantics and traceable numbers throughout.

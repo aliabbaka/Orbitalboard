@@ -52,6 +52,12 @@ The lab locally serves three.js 0.186.1 and its OrbitControls/MarchingCubes addo
 
 `qrcode-generator` 2.0.4 (Kazuhiko Arase) generates actual QR matrices; `fflate` 0.8.3 creates local Markdown/PNG ZIP bundles. Both are MIT-licensed; original notices remain in the installed packages and container copies. Only locally served, pinned modules are used; neither service sends data to a third party. The ZIP dependency was checked against the published malformed-ZIP64 advisory and updated to the fixed version; the app only creates ZIPs, not imports arbitrary archives.
 
+## Periodic and atomic-weight reference facts
+
+Stage 0.4 uses numerical/reference facts from PubChem (NCBI/NLM) and CIAAW Abridged Standard Atomic Weights 2024, with source URLs and SHA-256-recorded audit snapshots in `data/reference/`. CIAAW attribution/copyright notices are retained in its snapshot. The app displays selected facts, not copied textbook prose or artwork; do not assume any source site's surrounding content is unrestricted. Broader reference coverage does not enable new EHT elements.
+
+SymPy 1.14.0 and mpmath 1.3.0 are optional development oracles, not deployed calculator services. Their original package licenses remain in the installed development environment; the browser's restricted AST implementation is newly authored, not copied from them.
+
 ## Project license
 
 A license for newly authored OrbitalBoard code has not been chosen by the owner. The `private` package flag prevents accidental npm publication; it does not select a software license or make the code public domain.

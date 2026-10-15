@@ -47,8 +47,8 @@ npm run test:browser
 npm run demo
 npm run validation-report
 npm run benchmark
- .venv/bin/python -m pip install -r scripts/requirements-tier2-oracle.txt
- .venv/bin/python scripts/check_tier2_oracle.py
+.venv/bin/python -m pip install -r scripts/requirements-tier2-oracle.txt
+.venv/bin/python scripts/check_tier2_oracle.py
 ```
 
 `npm run build` emits native JavaScript ES modules and TypeScript declarations into `dist/`. No framework or bundler is required. Nothing is solved simply by importing `dist/index.js`.

@@ -112,3 +112,17 @@ The board/notebook acceptance path was exercised in a real Chromium browser with
 - `npm audit --omit=dev` reports zero known runtime vulnerabilities after updating fflate to 0.8.3. No Docker build, external deployment, paid-provider evaluation or manually tested Blender/VMD/note-app certification is claimed.
 
 Limits and deliberate grammar restrictions are in `docs/board.md`; larger/malformed states fail explicitly instead of inventing results or silently changing solver versions.
+
+## Stage 0.4 local evidence — October 14, 2026
+
+**183 checks passed:** 144 Node tests, 14 backend tests and 25 real Chromium browser flows. TypeScript checks and whitespace checks passed. No remote CI or deployment result is implied.
+
+- All 21 enabled registry entries have version/data pins, citation records and known-answer coverage. The 41 fixed Tier 2 cases cover balancing, masses, limiting/yield, gases, solutions, acid/base, buffers, titration, equilibrium, atomic filling, algebra/calculus/graphs and conversions.
+- Extra properties check exact atom conservation, ambiguity rejection, unsupported notation, unit dimensions/absolute temperature, display versus raw values, positive ICE concentrations/log-Q residuals, titration equivalence, graph domain gaps, safe AST parsing and derivative finite differences.
+- Neutral H–Kr configurations match independent PubChem facts, including Cr/Cu exceptions. CIAAW/PubChem raw source hashes match generated data. Mass calculations use CIAAW values instead of rounded reference-display masses and reject elements without standard weights.
+- Independent SymPy checks passed for 12 numerical fixture cases plus a differentiation identity; the existing PySCF/SciPy oracle still reproduces 22 cases and six angle curves. The EHT solver/parameter versions are unchanged.
+- Browser tests confirm explicit compute intent, unit failures, limited integration refusal, cited periodic facts, typed board dispatch, source-backed calculator insertion and schema-1 migration without altering old EHT state.
+- An actual browser context is switched offline, then reloads `/tools`, `/board` and the orbital lab. A molar-mass calculation and fresh O2 solve still work. Cache inspection finds no `/api/` or `/b/` entries. AI/server operations remain connection-dependent; no write queue is introduced.
+- Workbench/periodic screenshots are saved in ignored `test-results/` and visually inspected. Runtime dependency audit reports zero known vulnerabilities on this date.
+
+The known-answer cases are analytic textbook-law regressions/reference checks, not a claim that all input wording was copied from published questions. Model/domain limits, source-table uncertainty, elementary/polynomial math scope, client cache eviction and untested production/device/provider behavior remain explicit in `docs/solvers.md`.
