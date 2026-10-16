@@ -1,6 +1,6 @@
 # Roadmap / implementation status
 
-Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository now includes **Stages 0.1 through 0.4**.
+Source: user-supplied OrbitalBoard Technical Plan v2.2, October 9, 2026. The repository includes **Stages 0.1 through 0.4** and **Stage 0.5 implementation with a pending real-handwriting qualification gate**.
 
 ## Stage 0.1
 
@@ -72,8 +72,22 @@ App version **0.3.0**, numerical engine **0.1.0**, parameters unchanged. Read `d
 
 App **0.4.0**, EHT **0.1.0** unchanged. This is scoped, verified breadth, not all-purpose chemistry or a universal CAS; unsupported cases remain disabled. See `docs/solvers.md` for exact coverage and offline/privacy boundaries.
 
+## Stage 0.5 — implementation, not yet accuracy-qualified
+
+- [x] Selection-only PNG preview, deterministic typed/geometric proposals and separately configured optional vision bridge.
+- [x] Strict transcription grammar/Pauli/schema validation; no answers, energies, parameter changes or model tools in recognizer output.
+- [x] Editable interpretation/type, explicit review acknowledgement, original-ink retention and undoable input insertion; separate solver action remains required.
+- [x] Structured diagram reference mapping and existing solver-based comparison, with ordinal/default-label limits disclosed.
+- [x] Stale-selection abort/invalidations, offline/manual/missing-key paths, source-only crop tests and no automatic vision calls.
+- [x] Consent/origin/request/concurrency limits and bounded memory transcription cache; no server image/correction persistence.
+- [x] Opt-in local example export, separated procedural regression report and explicitly consented live benchmark runner.
+- [ ] Configure and evaluate an actual image-capable provider/model; none was called with paid credentials here.
+- [ ] Collect/review at least 200 representative real examples across several writers, agree accuracy/category/latency targets and meet them. Synthetic vectors do not satisfy this criterion.
+
+App **0.5.0**, grammar **ink-grammar-1.0.0**, EHT/parameters/solver versions and board schema 2 unchanged. See `docs/recognition.md`. Stage 0.5 must not be called fully qualified until the two unchecked gates pass.
+
 ## Next stages — not implemented
 
-0.5 ink recognition; 0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
+0.6 full tool-calling tutor; 0.7 learning/exam readiness; 0.8 learner assessment/study; 0.9 dashboards; 1.0 accessibility/security/launch.
 
 The registry now covers the declared Stage 0.4 scopes; unsupported Tier 3 and general CAS cases remain disabled. Accounts/instructor access, exam syllabus and full tutor/provider evaluation remain open. Preserve explicit intent, monochrome semantics and traceable numbers throughout.

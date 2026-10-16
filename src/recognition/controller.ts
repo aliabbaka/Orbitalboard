@@ -26,7 +26,7 @@ export function installRecognition(access: Access): { open(): Promise<void>; sel
     remote.disabled = !available || !navigator.onLine || !consent.checked || !image || !validSelection();
     accept.disabled = !reviewed.checked || !validSelection() || kind.value === 'unknown' || access.selection().readOnly;
     el<HTMLSelectElement>('recognition-system').disabled = kind.value !== 'energy-diagram';
-    el<HTMLButtonElement>('export-recognition-example').disabled = !el<HTMLInputElement>('recognition-export-consent').checked || !validSelection() || !input;
+    el<HTMLButtonElement>('export-recognition-example').disabled = !el<HTMLInputElement>('recognition-export-consent').checked || !validSelection() || !input || !image;
   };
   const show = (reading: Reading, source: string) => {
     proposed = validateReading(reading); method = source; kind.value = reading.kind; content.value = reading.text; reviewed.checked = false;
@@ -45,7 +45,7 @@ export function installRecognition(access: Access): { open(): Promise<void>; sel
   const open = async () => {
     const current = access.selection(); if (current.readOnly) throw new Error('Remix the board before adding recognized input.');
     input = selectionInput(current.objects); signature = selectionSignature(input); activeDocument = current.documentId; original = structuredClone(current.objects);
-    abort?.abort(); const ticket = ++sequence; image = null; proposed = null; consent.checked = false; reviewed.checked = false; el<HTMLInputElement>('recognition-export-consent').checked = false;
+    abort?.abort(); const ticket = ++sequence; image = null; proposed = null; el<HTMLImageElement>('recognition-preview').removeAttribute('src'); consent.checked = false; reviewed.checked = false; el<HTMLInputElement>('recognition-export-consent').checked = false;
     kind.value = 'unknown'; content.value = ''; el('recognition-score').textContent = 'Unverified input proposal · nothing computed'; el('recognition-ambiguities').replaceChildren();
     const picker = el<HTMLSelectElement>('recognition-system'); picker.replaceChildren();
     const none = document.createElement('option'); none.value = ''; none.textContent = 'Keep as typed input (no reference yet)'; picker.append(none);

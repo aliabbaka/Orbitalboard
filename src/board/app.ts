@@ -157,7 +157,7 @@ function selectionChanged(): void {
     add('Export model', () => openLab(doc().systems[object.systemId], null), true);
   } else {
     if (object.type === 'text') add('Edit text', () => openText(object.x, object.y, object));
-    else { add('Read selection', () => recognition.open()); add('Type instead', () => openText(object.x, object.y)); }
+    else if (object.type === 'ink') { add('Read selection', () => recognition.open()); add('Type instead', () => openText(object.x, object.y)); }
   }
   if (objects.length === 1 && object.type === 'text') add('Read selection', () => recognition.open(), true);
   add('Pin', () => pinSelection());

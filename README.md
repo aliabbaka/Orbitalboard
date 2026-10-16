@@ -1,6 +1,6 @@
 # OrbitalBoard
 
-A chemistry and math learning tool where **solvers compute and AI interprets**. **Stage 0.4** adds a test-gated chemistry/math solver registry, units and precision checks, cited periodic references and offline browser calculators, alongside the whiteboard/notebook and flagship orbital lab.
+A chemistry and math learning tool where **solvers compute and AI interprets**. **Stage 0.5's recognition workflow is implemented**, alongside the solver registry, source-linked whiteboard/notebook and orbital lab. Real handwriting/provider accuracy qualification remains pending, not hidden behind synthetic test scores.
 
 The supplied October 9, 2026 plan (v2.2) is the product direction. Its `eht_engine.py` prototype was unavailable, so this is a new implementation, **not a verified port** of the reported prototype.
 
@@ -21,7 +21,7 @@ Open **http://127.0.0.1:5001/tools** for verified calculators, **/board** for th
 
 **Offline:** after an online visit, wait for **Offline assets ready**. Calculators, periodic data, the board and orbital worker can then reload without connection. AI and server sharing require a connection. API/user data and failed writes are never put into the asset cache or queued. Save local work explicitly.
 
-**Board:** choose Text/formula, click the board, type `NH3`, then select it and choose **3D model**, **Orbitals** or **Answer**. Writing alone does not solve. Pen strokes remain ink; handwriting recognition is later. System builder accepts presets, XYZ and freely editable atoms. A formula without a known template is not assigned a guessed geometry.
+**Board:** type `NH3`, or draw/select ink and choose **Read selection**. Review/correct the proposed input before accepting, then choose a solver separately. Local line/arrow proposals and manual typing work without a key; handwritten glyphs require separately configured vision and explicit PNG-upload consent. Original ink remains unchanged and accepting a reading never runs a solver. System builder accepts presets, XYZ and editable atoms; formulas without templates are not assigned guessed geometry.
 
 **Lab:** choose a preset/XYZ, then Solve. Drag to orbit, enable Move atoms to drag them, or Place atoms to free-build in the camera-target plane. Coordinate fields provide the keyboard/precise alternative. Pin snapshot opens/transfers into the local notebook; Download model offers GLB, OBJ, PLY, gated STL, cube and XYZ. Live updates run only after the explicit first solve.
 
@@ -47,6 +47,7 @@ npm run test:browser
 npm run demo
 npm run validation-report
 npm run benchmark
+npm run benchmark:recognition
 .venv/bin/python -m pip install -r scripts/requirements-tier2-oracle.txt
 .venv/bin/python scripts/check_tier2_oracle.py
 ```
@@ -108,6 +109,12 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 
 `Dockerfile` provides a local build/deployment starting point with Node for the solver and gunicorn for Flask. No image has been published and no remote deployment has been made. A production launch still requires the planned security review and infrastructure-level rate limiting; the in-memory local tutor limiter is not a distributed abuse-prevention system.
 
+### Optional selection vision
+
+Set separate server-only `RECOGNITION_PROVIDER` (`openai` or `groq`), `RECOGNITION_MODEL` (explicit supported image-capable model) and `RECOGNITION_API_KEY`. No default model or text-tutor key reuse is assumed. Preview/consent and confirmation are required; no board text/tool request can execute through the recognizer. See [recognition scope/privacy and benchmark gate](docs/recognition.md).
+
+The default benchmark is 24 **synthetic geometric** cases, not 200 real handwriting samples. A paid live benchmark requires consented representative examples and an additional `--allow-upload` flag; neither live-provider accuracy nor the proposed p95 latency has been qualified in this work.
+
 ## What is implemented
 
 - Analytic, normalized contracted STO-3G **valence** s/p overlaps.
@@ -128,6 +135,8 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 - Source-linked image/vector/Markdown/PDF/JSON exports and six 3D/chemistry download formats with reader/manifold checks.
 - 21 versioned Tier 2 calculators, checked chemistry/math grammar, explicit dimensions and display precision.
 - 118 cited periodic reference elements, standard-weight gates, neutral configuration cross-checks and content-hashed offline asset caching.
+- Selection-only input preview/vision adapter, conservative local diagram proposals, mandatory correction/confirmation and stale-reading protection.
+- Local opt-in correction exports, separated synthetic regression reports and an explicitly gated live benchmark runner.
 
 **Enabled:** H, He, C, N, O, F, with documented model limits. **Sourced but disabled:** Li, Be, B, Ne pending chemical reference checks. Transition metals and d orbitals are unsupported. The 30-atom safety cap is not a 16 ms performance guarantee; large systems explicitly warn and should run in the worker.
 
@@ -137,9 +146,10 @@ The Flask bridge re-solves the supplied geometry with the same Node engine and *
 - [Using the lab and its architecture](docs/lab.md)
 - [Board, notes, sharing and export contract](docs/board.md)
 - [Tier 2 solver scope, data and offline contract](docs/solvers.md)
+- [Selection recognition, configuration and pending qualification](docs/recognition.md)
 - [Measured validation](docs/validation.md)
 - [CircuitLab code audit](docs/circuitlab-audit.md)
 - [Roadmap and defect status](docs/roadmap.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-The next planned milestone is **Stage 0.5: Ink recognition on selection**. Full tool-calling tutoring, broader unsupported chemistry/calculus, curriculum/mastery, accounts and public-launch hardening remain later stages.
+**Still required for Stage 0.5 qualification:** a configured live vision model and a reviewed multi-writer benchmark. The next implementation milestone after this workflow is **Stage 0.6: full tool-calling tutor**; its evaluation is not implied by the recognition scaffold.

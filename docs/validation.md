@@ -126,3 +126,15 @@ Limits and deliberate grammar restrictions are in `docs/board.md`; larger/malfor
 - Workbench/periodic screenshots are saved in ignored `test-results/` and visually inspected. Runtime dependency audit reports zero known vulnerabilities on this date.
 
 The known-answer cases are analytic textbook-law regressions/reference checks, not a claim that all input wording was copied from published questions. Model/domain limits, source-table uncertainty, elementary/polynomial math scope, client cache eviction and untested production/device/provider behavior remain explicit in `docs/solvers.md`.
+
+## Stage 0.5 implementation evidence — October 15, 2026
+
+**222 checks passed:** 172 Node tests, 19 backend tests and 31 Chromium flows. TypeScript and whitespace checks passed. These are software/grammar regressions, not a qualified real-handwriting release.
+
+- Browser tests prove drawing/selection/opening a preview makes no vision call. Sending a crop needs explicit consent. All accepted readings remain unverified inputs; accepting one does not run a solver, and the original ink remains undoable.
+- Corrections override uncertain mock readings, invalid grammar does not become a result, stale requests cannot apply after source removal, offline/missing-provider paths retain manual input, and the local geometric diagram proposal uses the real existing comparison solver only after review/action.
+- Server tests cover no text-tutor key reuse, same-origin/rate/body/PNG caps, missing consent, forbidden URL/SVG/full-board fields, strict tool/answer/energy/Pauli/grammar rejection, unknown readings and bounded crop-hash caching. Provider responses are mocked; no paid service was called.
+- Local benchmark: **24/24 procedural geometric cases**, **zero human writers**. One local run measured **0.87 ms p95** for the narrow geometry helper. This is not glyph OCR accuracy or the proposed online <1.5 s p95 evidence. Synthetic and user-contributed unverified groups are reported separately.
+- The opt-in local export and separately gated live benchmark runner are implemented. No examples/crops are persisted to the server or silently included in analytics/exports; a deliberate live benchmark needs an additional upload flag.
+
+**Unpassed gates:** configure/evaluate an actual image-capable model; collect/review ≥200 representative real examples across several writers; agree content-specific exact-match/error/latency targets and meet them. The complete Stage 0.5 accuracy exit criterion is therefore **pending**, even though its selection/confirmation/validation workflow is implemented. See `docs/recognition.md`.
